@@ -86,14 +86,15 @@ upgrade didn't change behavior, rather than describing the new behavior.
   - [x] Validate every `internal/gnomockd/testdata/*.json` against
         `swagger/swagger.yaml`, and check that preset JSON tags match the swagger
         properties.
-- [ ] **Sidecar cleaner.**
-  - [ ] Round-trip tests for `generateID`/`parseID` (`container.go:70-89`).
-  - [ ] Integration test: a sidecar exists after `Start`, and is gone after `Stop`.
+- [x] **Sidecar cleaner.**
+  - [x] Round-trip tests for `generateID`/`parseID` (`container.go:70-89`).
+  - [x] Integration test: a sidecar exists after `Start`, and is gone after `Stop`.
 - [ ] **Per-arch image selection.** Unit-test `Image()` for every preset, including the
       MySQL amd64/arm64 split, so removing that split in Phase 6 is deliberate.
 - [ ] **Registry.** Test that `cmd/server` registers all 18 presets.
-- [ ] **Log streaming.** Unit-test `copyf` and `closeLogReader` (`gnomock.go:154-179`)
-      using `stdcopy.NewStdWriter`.
+- [x] **Log streaming.** Unit-test `copyf` and `closeLogReader` (`gnomock.go:154-179`)
+      using `stdcopy.NewStdWriter`. (moby/api v1.54 has no `NewStdWriter`, so the tests
+      build frames by hand from the documented wire format.)
 
 ## Phase 2: Tooling and CI
 
