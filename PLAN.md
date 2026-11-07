@@ -141,6 +141,15 @@ upgrade didn't change behavior, rather than describing the new behavior.
       tasks lost `--build-arg GOARCH`; the cleaner builds from the root context. The
       core test tasks dropped the coverage flags but still run the same tests (both
       gnomockd commands, `./cmd/server` in internal).
+- [x] **arm64 follow-ups** (found by the first arm64 CI run; owner chose the fix).
+  - [x] `TestGnomock_witUseLocalImagesFirst` used `circleci/mongo:4.4`, which is amd64
+        only. It now uses the `library/redis:7.2` / `cimg/redis:7.2` pair. Both are
+        published for amd64 and arm64, and they share `name:tag` the same way, so the
+        issue #302 check is unchanged.
+  - [x] **Known gap:** `mysql/mysql-server:5.7.32` (the image the arm64 mysql preset
+        picks for its 5.7 test) is amd64 only. The `5.7.32` case of `preset/mysql`
+        `TestPreset` is skipped on arm64 only. Phase 6 removes the skip together with
+        5.7 and the per-arch split.
 
 ## Phase 3: Go 1.26 and same-major dependency bumps
 
@@ -200,7 +209,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 | Preset | Default: old → new | Test matrix (new) | Extra work |
 |---|---|---|---|
 | postgres | 16.2 → **18** | 15, 16, 17, 18 | PG 18 changed the image's data-dir layout. Check the init/queries file handling. |
-| mysql | 8.0.22 → **9.7** (LTS) | 8.4, 9.7, 26.10 | Delete `preset_arm64.go`/`preset_amd64.go` and use `library/mysql` everywhere. `mysql_native_password` is gone in 9.x, so verify `caching_sha2_password` over plain TCP. |
+| mysql | 8.0.22 → **9.7** (LTS) | 8.4, 9.7, 26.10 | Delete `preset_arm64.go`/`preset_amd64.go` and use `library/mysql` everywhere. Delete the arm64 skip of the 5.7.32 case in `preset_test.go` (Phase 2 known gap). `mysql_native_password` is gone in 9.x, so verify `caching_sha2_password` over plain TCP. |
 | mariadb | 10.5.8 → **12.3** (LTS) | 10.11, 11.4, 11.8, 12.3, 13.0 | MariaDB 11+ images have no `mysql*` binaries. Check that the healthcheck/init doesn't call them. |
 | redis | 6.0.9 → **8.10** | 6.2, 7.2, 7.4, 8.2, 8.10 | Driver is v9 (Phase 5). |
 | mongo | 5.0 → **9.0** | 7.0, 8.0, 8.3, 9.0 | Driver is v2 (Phase 5). |
