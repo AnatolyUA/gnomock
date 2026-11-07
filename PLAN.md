@@ -99,7 +99,7 @@ upgrade didn't change behavior, rather than describing the new behavior.
 ## Phase 2: Tooling and CI
 
 - [ ] **golangci-lint.**
-  - [ ] Upgrade v1.64.5 → v2.15.0 and migrate `.golangci.yml` to the v2 format
+  - [x] Upgrade v1.64.5 → v2.15.0 and migrate `.golangci.yml` to the v2 format
         (`golangci-lint migrate`). `gosimple` and `stylecheck` merge into `staticcheck`.
         `gofmt`, `gofumpt` and `goimports` move to `formatters`. `wsl` becomes `wsl_v5`.
   - [ ] Fix or justify the new findings.
