@@ -43,12 +43,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.6
 	github.com/moby/moby/api v1.54.1
 	github.com/moby/moby/client v0.4.0
+	go.yaml.in/yaml/v3 v3.0.4
 )
 
-require (
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
-)
+require go.yaml.in/yaml/v2 v2.4.2 // indirect
 
 require (
 	filippo.io/edwards25519 v1.1.1 // indirect

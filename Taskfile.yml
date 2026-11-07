@@ -16,6 +16,7 @@ tasks:
       GOMAXPROCS: 2
     cmds:
       - go test -race -cover -coverprofile=gnomockd-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestGnomockd
+      - go test -race -v ./internal/gnomockd -run '^(TestWithOptions|TestStartRequest|TestContainerResponseJSON|TestSwagger)'
 
   test:core:internal:
     env:

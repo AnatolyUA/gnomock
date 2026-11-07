@@ -76,14 +76,14 @@ upgrade didn't change behavior, rather than describing the new behavior.
   - [x] Extract the tag-matching logic from `isExistingLocalImage` (`docker.go:65-88`)
         into a pure function and unit-test it.
   - [x] Integration test: `WithUseLocalImagesFirst` with a locally tagged image.
-- [ ] **`WithOptions` and the gnomockd JSON contract.**
-  - [ ] Golden test: decode a `startRequest` JSON containing every documented field,
+- [x] **`WithOptions` and the gnomockd JSON contract.**
+  - [x] Golden test: decode a `startRequest` JSON containing every documented field,
         apply `WithOptions`, assert the resulting `Options`. Today this test documents
         the bug: `privileged`, `cmd`, `disable_cleanup`, `use_local_images_first` and
         `auth` are dropped. It gets flipped in Phase 4.
-  - [ ] Golden test of the response JSON for `Container` and for errors
+  - [x] Golden test of the response JSON for `Container` and for errors
         (`internal/errors`).
-  - [ ] Validate every `internal/gnomockd/testdata/*.json` against
+  - [x] Validate every `internal/gnomockd/testdata/*.json` against
         `swagger/swagger.yaml`, and check that preset JSON tags match the swagger
         properties.
 - [ ] **Sidecar cleaner.**

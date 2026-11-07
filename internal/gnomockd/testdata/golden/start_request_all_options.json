@@ -1,0 +1,28 @@
+{
+    "preset": {
+        "version": "16.2",
+        "user": "gnomock",
+        "password": "gnomick",
+        "db": "golden"
+    },
+    "options": {
+        "timeout": 60000000000,
+        "env": ["FOO=foo", "BAR=bar"],
+        "debug": true,
+        "privileged": true,
+        "container_name": "gnomock-golden",
+        "cmd": ["postgres", "-c", "fsync=off"],
+        "entrypoint": ["docker-entrypoint.sh"],
+        "host_mounts": {"/tmp/gnomock-src": "/data"},
+        "disable_cleanup": true,
+        "use_local_images_first": true,
+        "custom_named_ports": {
+            "default": {"protocol": "tcp", "port": 5432, "host_port": 15432}
+        },
+        "auth": "eyJ1c2VybmFtZSI6ImZvbyIsInBhc3N3b3JkIjoiYmFyIn0K",
+        "extraHosts": ["db.local:127.0.0.1"],
+        "reuse": true,
+        "customImage": "registry.example.com/library/postgres:16.2",
+        "user": "1000:1000"
+    }
+}
