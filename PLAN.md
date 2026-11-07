@@ -166,7 +166,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       Expected flips: the "Current behavior" cases in `TestIsDeletionAlreadyInProgessError`
       (`docker_internal_test.go`) that return false for a missing client prefix or an
       extra wrap.
-- [ ] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`).
+- [ ] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`;
+      fix approved by the owner).
       `preset/mysql/preset.go:72-74` and `preset/mariadb/preset.go:70-72` each call
       `mysqldriver.SetLogger` inside their own `sync.Once`. Concurrent `Options()` calls
       on both presets (gnomockd serving `/start/mysql` and `/start/mariadb` at once)
@@ -271,6 +272,10 @@ For every row:
   `/etc/docker/daemon.json`, not in the repo). The mirror can also return 429 for less
   popular images, which makes tests that always pull (e.g. `TestWaitForContainerNetwork`)
   flaky locally. Re-run before concluding a failure is real.
+- **Kafka CI flake.** `[preset] kafka` `TestPreset_withDefaults` (existing test) once hung
+  in the healthcheck wait until the 10-minute test timeout (run 42405470107). It passed on
+  re-run and locally in 58s. Re-run once before treating a kafka timeout as real; if it
+  recurs, investigate (Phase 6 changes the kafka default anyway).
 - **cmd/cleaner.** It still `require`s the published gnomock v0.32.0 for anyone building
   outside the workspace. `go.work` fixes local and CI builds only.
 
