@@ -81,7 +81,7 @@ tasks:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --build-arg GOARCH=amd64 --platform linux/amd64 --progress plain --tag orlangure/gnomock:amd64 .
+      - docker build --platform linux/amd64 --progress plain --tag orlangure/gnomock:amd64 .
     status:
       - test -z $release
       - test {{ eq ARCH "amd64" }} == false
@@ -91,7 +91,7 @@ tasks:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --build-arg GOARCH=arm64 --platform linux/arm64 --progress plain --tag orlangure/gnomock:arm64 .
+      - docker build --platform linux/arm64 --progress plain --tag orlangure/gnomock:arm64 .
     status:
       - test -z $release
       - test {{ eq ARCH "arm64" }} == false
@@ -109,7 +109,7 @@ tasks:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --build-arg GOARCH=amd64 --platform linux/amd64 --progress plain --tag orlangure/gnomock-cleaner:amd64 .
+      - docker build --platform linux/amd64 --progress plain --tag orlangure/gnomock-cleaner:amd64 .
     status:
       - test -z $release
       - test {{ eq ARCH "amd64" }} == false
@@ -119,7 +119,7 @@ tasks:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --build-arg GOARCH=arm64 --platform linux/arm64 --progress plain --tag orlangure/gnomock-cleaner:arm64 .
+      - docker build --platform linux/arm64 --progress plain --tag orlangure/gnomock-cleaner:arm64 .
     status:
       - test -z $release
       - test {{ eq ARCH "arm64" }} == false

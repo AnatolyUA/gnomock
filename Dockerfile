@@ -1,4 +1,4 @@
-FROM golang:latest AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 
 WORKDIR /gnomock/
 ADD go.mod .
@@ -6,8 +6,9 @@ ADD go.sum .
 RUN go mod download -x
 RUN go mod verify
 ADD . .
-ARG GOARCH
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /gnomockd ./cmd/server
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /gnomockd ./cmd/server
 
 FROM scratch
 

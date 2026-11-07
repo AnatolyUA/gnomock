@@ -127,10 +127,10 @@ upgrade didn't change behavior, rather than describing the new behavior.
 - [x] **Removals.** Delete Codecov (upload steps, `codecov.yml`, README badge) and
       `.circleci/`. `cmd/generator` no longer writes CircleCI jobs and now adds a
       `test-preset` matrix entry instead of a whole job.
-- [ ] **Dockerfiles** (root and `cmd/cleaner`).
-  - [ ] Change `golang:latest` to `golang:1.27-alpine`.
-  - [ ] Use buildx `TARGETOS`/`TARGETARCH` instead of `ARG GOARCH`.
-  - [ ] Add `-trimpath`.
+- [x] **Dockerfiles** (root and `cmd/cleaner`).
+  - [x] Change `golang:latest` to `golang:1.27-alpine`.
+  - [x] Use buildx `TARGETOS`/`TARGETARCH` instead of `ARG GOARCH`.
+  - [x] Add `-trimpath`.
 - [ ] **Cleaner module.**
   - [ ] Add a root `go.work` (`.` and `./cmd/cleaner`) so the cleaner builds and tests
         against local code.
