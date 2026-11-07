@@ -162,7 +162,10 @@ upgrade didn't change behavior, rather than describing the new behavior.
 
 A trial run of this phase already compiled and passed `go vet` with no code changes.
 
-- [ ] `go.mod`: `go 1.26.0`. Drop the stray `toolchain` line in `cmd/cleaner/go.mod`.
+- [x] `go.mod`: `go 1.26.0`. Drop the stray `toolchain` line in `cmd/cleaner/go.mod`.
+      `go.work` and `cmd/cleaner/go.mod` also say `go 1.26.0` (a workspace `go` line
+      older than a module's breaks the workspace). No `go work sync`: it would raise the
+      cleaner's indirect requirements, which stay as they are.
 - [ ] Bump every direct dependency to its latest version within the current major:
   - **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
   - **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.

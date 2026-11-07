@@ -1,8 +1,6 @@
 module github.com/orlangure/gnomock/cmd/cleaner
 
-go 1.24.0
-
-toolchain go1.24.4
+go 1.26.0
 
 require github.com/orlangure/gnomock v0.32.0
 
