@@ -20,7 +20,7 @@ branch. Each step is a separate commit so it can be reviewed or reverted on its 
 | Module path / images | Keep `github.com/orlangure/gnomock` and the upstream `orlangure/*` image names. CI builds the server and cleaner images locally but never pushes them. |
 | Version policy | The test matrix covers every vendor-supported (non-EOL) version line. The default is the newest stable or LTS line. Delete code paths that exist only for EOL versions. Deprecate exported identifiers instead of deleting them. |
 | Kafka | Default `4.3.1-L0`. Test `3.9.0-L0` and `4.3.1-L0`. Expose the ZooKeeper port only for versions below 4. Mark `ZooKeeperPort` as `// Deprecated:`. |
-| LocalStack | Default `4.14`, the last tag that runs without an auth token. Add an opt-in auth-token option for 2026.x. CI runs the 2026.x test only when a `LOCALSTACK_AUTH_TOKEN` secret exists. |
+| LocalStack | Default `4.14`, the last tag that runs without an auth token. Add `WithAuthToken(token)` for 2026.x; when it isn't set, fall back to the host's `LOCALSTACK_AUTH_TOKEN` env var, matching LocalStack's own tooling. The 2026.x test runs only when that env var is set: CI maps it from the repo secret (already added), and it is skipped otherwise. It can't run in the cloud session because containers there have no internet access to activate the licence. |
 | Elasticsearch client | Stay on `go-elasticsearch/v8`, latest 8.19.x. It is forward-compatible with 9.x servers. Drop the v7 client and the 7.17 test. |
 | InfluxDB | Support 2.x only, with pinned tags. Document that v3 is not supported. |
 | CI extras | Add an arm64 job. Remove CircleCI. Remove Codecov (no token in the fork). |
