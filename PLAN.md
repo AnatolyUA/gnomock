@@ -196,7 +196,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 - [x] Replace `gorilla/mux` with `net/http` patterns. Routes and the JSON contract
       tests are unchanged; edge-case differences are listed under behavior changes (9).
 - [x] Run `go fix ./...` (modernizers) as a separate commit. It took two passes to
-      converge (the second removes `f := f` copies the first one leaves behind).
+      converge: the first pass leaves `f := f` copies in loops over `Type.Fields()`, and
+      the second removes them, so the commit has none.
 
 ## Phase 4: Bug fixes found during research
 
@@ -310,8 +311,10 @@ For every row:
    codes for valid requests, and response bodies are unchanged. A wrong method still
    gets 405, now with an `Allow: POST` header and a `Method Not Allowed` body. Unclean
    paths (`//stop`) still redirect to the clean path, now with 307 (keeps the POST)
-   instead of 301. `/start/a%2Fb` now returns the JSON "preset not found" 404 instead
-   of the plain-text 404.
+   instead of 301. A percent-encoded `/` or `.` in the preset name (`/start/a%2Fb`,
+   `/start/%2e%2e`) now reaches the handler and gets the JSON "preset not found" 404,
+   where mux gave a plain-text 404 or a redirect. 405 responses now carry
+   `Content-Type: text/plain`.
 
 ## Risks and open verification items
 
@@ -327,6 +330,12 @@ For every row:
   `/etc/docker/daemon.json`, not in the repo). The mirror can also return 429 for less
   popular images, which makes tests that always pull (e.g. `TestWaitForContainerNetwork`)
   flaky locally. Re-run before concluding a failure is real.
+- **elastic and k3s can't pass locally** (found in Phase 3). The session's disk
+  allowance (~13 GB free) is far smaller than the 252 GB filesystem `df` reports, so
+  both see the disk as ~95% full. Elasticsearch refuses to allocate shards
+  (`unavailable_shards_exception`, same failure at the pre-Phase-3 baseline `da8713e`),
+  and k3s taints its node `disk-pressure`, so the kubeconfig pod never schedules. CI is
+  the authority for these two presets.
 - **Kafka CI flake.** `[preset] kafka` `TestPreset_withDefaults` (existing test) once hung
   in the healthcheck wait until the 10-minute test timeout (run 42405470107). It passed on
   re-run and locally in 58s. Re-run once before treating a kafka timeout as real; if it
