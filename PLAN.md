@@ -166,7 +166,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       `go.work` and `cmd/cleaner/go.mod` also say `go 1.26.0` (a workspace `go` line
       older than a module's breaks the workspace). No `go work sync`: it would raise the
       cleaner's indirect requirements, which stay as they are.
-- [ ] Bump every direct dependency to its latest version within the current major:
+- [x] Bump every direct dependency to its latest version within the current major:
   - [x] **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
   - [x] **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
   - [x] **Docker:** `moby/moby/{api,client}` v1.56.1 / v0.6.2.
@@ -187,8 +187,10 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       is the newest that works with 3.37.0. Phase 6 bumps azblob to v1.7.0 together with
       Azurite 3.37.0. 1.8 waits for an Azurite release that supports its API version
       (v1.8.1+ would also pull Apache Arrow into `preset/azurite`).
-  - [ ] **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`.
-- [ ] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
+  - [x] **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`, plus
+    `go.yaml.in/yaml/v3` v3.0.6. Apart from the azblob hold, `go list -m -u` shows no
+    same-major update for any direct dependency.
+- [x] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
       `structured-merge-diff` v7 that breaks apimachinery 0.37 (seen in the trial).
       Let `go mod tidy` resolve the indirects.
 - [ ] Replace `gorilla/mux` with `net/http` patterns.

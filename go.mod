@@ -26,9 +26,9 @@ require (
 	go.mongodb.org/mongo-driver v1.17.10
 	go.uber.org/goleak v1.3.0
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0
-	golang.org/x/mod v0.38.0
-	golang.org/x/sync v0.22.0
+	go.uber.org/zap v1.28.0
+	golang.org/x/mod v0.42.0
+	golang.org/x/sync v0.24.0
 	k8s.io/api v0.37.2
 	k8s.io/apimachinery v0.37.2
 	k8s.io/client-go v0.37.2
@@ -42,7 +42,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.52.11
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 )
 
 require (
