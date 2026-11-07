@@ -112,12 +112,12 @@ upgrade didn't change behavior, rather than describing the new behavior.
       `golangci/golangci-lint-action@v9`, `github/codeql-action@v4`,
       `docker/setup-qemu-action@v4`, `docker/setup-buildx-action@v4`,
       `arduino/setup-task@v3`.
-- [ ] **Workflow cleanup.**
-  - [ ] Replace `go get -v -t -d ./...` with `go mod download`.
-  - [ ] Turn the 18 near-identical preset jobs into one matrix job.
-- [ ] **Go and triggers.**
-  - [ ] Go matrix 1.26 and 1.27 for core jobs. Preset jobs use 1.27.
-  - [ ] Add the triggers: push to any branch, and `workflow_dispatch`.
+- [x] **Workflow cleanup.**
+  - [x] Replace `go get -v -t -d ./...` with `go mod download`.
+  - [x] Turn the 18 near-identical preset jobs into one matrix job.
+- [x] **Go and triggers.**
+  - [x] Go matrix 1.26 and 1.27 for core jobs. Preset jobs use 1.27.
+  - [x] Add the triggers: push to any branch, and `workflow_dispatch`.
 - [ ] **arm64 job.** On `ubuntu-24.04-arm`: core tests plus the postgres, mysql, redis
       and mongo presets. Also add `GOARCH=arm64 go vet ./...` to the lint job.
 - [ ] **Service-container job.** Stop using `orlangure/gnomock:v0.20.0`. Build the server

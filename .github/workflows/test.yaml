@@ -2,8 +2,7 @@ name: Test
 on:
   push:
     branches:
-      - master
-      - 'claude/**'
+      - '**'
   pull_request:
   workflow_dispatch:
 jobs:
@@ -14,7 +13,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.24'
+          go-version: '1.27'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -22,50 +21,41 @@ jobs:
           args: --timeout=10m
 
   test-core:
-    name: "[core] gnomock, gnomockd"
-    # strategy:
-    #   matrix:
-    #     os: [ubuntu-latest, macos-latest]
-    # runs-on: ${{ matrix.os }}
+    name: "[core] gnomock, gnomockd (go ${{ matrix.go }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.26', '1.27']
     runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
+          go-version: ${{ matrix.go }}
       - name: Get dependencies
-        run: go get -v -t -d ./...
+        run: go mod download
       - name: Install Task
         uses: arduino/setup-task@v3
         with:
-          version: '3.0.0'
-      - uses: docker-practice/actions-setup-docker@master
-        if: ${{ matrix.os == 'macos-latest' }}
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Test Gnomock
         run: task test:core:gnomock
       - name: Test gnomockd
         run: task test:core:gnomockd
       - name: Test internal
         run: task test:core:internal
-      - name: Report coverage
-        run: |
-          cat gnomock-cover.txt gnomockd-cover.txt internal-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
 
   test-github-action:
     name: "[core] github action"
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
       - name: Install Task
         uses: arduino/setup-task@v3
         with:
-          version: '3.0.0'
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
@@ -104,419 +94,42 @@ jobs:
       - name: Connect 3
         run: PGPASSWORD=password psql -h 127.0.0.1 -U postgres -p 15432 -c "select 1;"
 
-  test-localstack:
-    name: "[preset] localstack"
+  test-preset:
+    name: "[preset] ${{ matrix.preset }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {preset: localstack, server: TestLocalstack}
+          - {preset: elastic, server: TestElastic}
+          - {preset: memcached, server: TestMemcached}
+          - {preset: rabbitmq, server: TestRabbitMQ}
+          - {preset: kafka, server: TestKafka}
+          - {preset: postgres, server: TestPostgres}
+          - {preset: mariadb, server: TestMariaDB}
+          - {preset: splunk, server: TestSplunk}
+          - {preset: redis, server: TestRedis}
+          - {preset: mysql, server: TestMySQL}
+          - {preset: mssql, server: TestMSSQL}
+          - {preset: mongo, server: TestMongo}
+          - {preset: k3s, server: TestK3s}
+          - {preset: cockroachdb, server: TestCockroachDB}
+          - {preset: influxdb, server: TestInfluxDB}
+          - {preset: cassandra, server: TestCassandra}
+          - {preset: azurite, server: TestAzurite}
+          - {preset: vault, server: TestVault}
     runs-on: ubuntu-latest
     env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      # Only the localstack entry gets the token (used by the 2026.x test).
+      LOCALSTACK_AUTH_TOKEN: ${{ matrix.preset == 'localstack' && secrets.LOCALSTACK_AUTH_TOKEN || '' }}
     steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
+          go-version: '1.27'
       - name: Get dependencies
-        run: go get -v -t -d ./...
+        run: go mod download
       - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/localstack/...
+        run: go test -race -v ./preset/${{ matrix.preset }}/...
       - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestLocalstack
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-elastic:
-    name: "[preset] elastic"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -covermode=atomic -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/elastic/...
-      - name: Test server
-        run: go test -race -cover -covermode=atomic -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestElastic
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-memcached:
-    name: "[preset] memcached"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/memcached/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestMemcached
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-rabbitmq:
-    name: "[preset] rabbitmq"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/rabbitmq/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestRabbitMQ
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-kafka:
-    name: "[preset] kafka"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/kafka/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestKafka
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-postgres:
-    name: "[preset] postgres"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/postgres/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestPostgres
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-mariadb:
-    name: "[preset] mariadb"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/mariadb/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestMariaDB
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-splunk:
-    name: "[preset] splunk"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/splunk/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestSplunk
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-redis:
-    name: "[preset] redis"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/redis/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestRedis
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-mysql:
-    name: "[preset] mysql"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/mysql/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestMySQL
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-mssql:
-    name: "[preset] mssql"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/mssql/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestMSSQL
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-mongo:
-    name: "[preset] mongo"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/mongo/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestMongo
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-k3s:
-    name: "[preset] k3s"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/k3s/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestK3s
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-cockroachdb:
-    name: "[preset] cockroachdb"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/cockroachdb/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestCockroachDB
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-influxdb:
-    name: "[preset] influxdb"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/influxdb/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestInfluxDB
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-cassandra:
-    name: "[preset] cassandra"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/cassandra/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestCassandra
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-azurite:
-    name: "[preset] azurite"
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/azurite/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestAzurite
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-  test-vault:
-    name: "[preset] vault"
-
-    runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    steps:
-      - name: Set up Go 1.24
-        uses: actions/setup-go@v7
-        with:
-          go-version: 1.24
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: Get dependencies
-        run: go get -v -t -d ./...
-      - name: Test preset
-        run: go test -race -cover -coverprofile=preset-cover.txt -coverpkg=./... -v ./preset/vault/...
-      - name: Test server
-        run: go test -race -cover -coverprofile=server-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestVault
-      - name: Report coverage
-        run: |
-          cat preset-cover.txt server-cover.txt > coverage.txt
-          bash <(curl -s https://codecov.io/bash)
-
-### preset tests go here
+        run: go test -race -v ./internal/gnomockd -run ${{ matrix.server }}
