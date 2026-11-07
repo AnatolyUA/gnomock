@@ -170,11 +170,14 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
   - [x] **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
   - [x] **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
   - [x] **Docker:** `moby/moby/{api,client}` v1.56.1 / v0.6.2.
-  - [ ] **Database and messaging drivers:**
+  - [x] **Database and messaging drivers:**
     - SQL drivers: `go-sql-driver/mysql` v1.10, `lib/pq` v1.12, `go-mssqldb` v1.11.
     - Messaging: `amqp091-go` v1.16, `kafka-go` v0.4.51.
     - Other stores: `gomemcache` latest, `go-elasticsearch/v8` v8.19.x,
       `influxdb-client-go/v2` latest.
+    - Also bumped within the same major: `mongo-driver` v1.17.10 (Phase 5 moves it to
+      v2). `influxdb-client-go/v2`, `gocql`, `go-redis` v6/v7 and `go-elasticsearch/v7`
+      were already at their latest same-major versions.
   - [ ] **Cloud APIs:** `vault/api` v1.23, `azblob` v1.8.
   - [ ] **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`.
 - [ ] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
