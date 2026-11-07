@@ -178,7 +178,15 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
     - Also bumped within the same major: `mongo-driver` v1.17.10 (Phase 5 moves it to
       v2). `influxdb-client-go/v2`, `gocql`, `go-redis` v6/v7 and `go-elasticsearch/v7`
       were already at their latest same-major versions.
-  - [ ] **Cloud APIs:** `vault/api` v1.23, `azblob` v1.8.
+  - [x] **Cloud APIs:** `vault/api` v1.23, `azblob` v1.8.
+    - **azblob held at v1.6.1** (owner's decision). No azblob 1.8.x works with any
+      released Azurite: 1.8.0+ sends storage API version 2026-06-06 or newer, while
+      Azurite 3.34.0 (current default) accepts up to 2025-05-05 and 3.37.0 (newest) up
+      to 2026-04-06. With v1.8.3 every azurite test failed with 400 "The API version
+      … is not supported by Azurite". v1.6.1 is the newest that works with 3.34.0; v1.7.0
+      is the newest that works with 3.37.0. Phase 6 bumps azblob to v1.7.0 together with
+      Azurite 3.37.0. 1.8 waits for an Azurite release that supports its API version
+      (v1.8.1+ would also pull Apache Arrow into `preset/azurite`).
   - [ ] **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`.
 - [ ] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
       `structured-merge-diff` v7 that breaks apimachinery 0.37 (seen in the trial).
@@ -237,7 +245,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 | localstack | 0.14.0 → **4.14** | 3.8, 4.14, plus 2026.10 when a token is present | Add a token option. Remove 0.x-specific code (`0.12.2` is already deleted from Docker Hub). Check the services/healthcheck endpoints in 4.x. |
 | vault | 1.13.0 → **2.2** | 2.2 | Review the Vault 2.0 breaking changes that affect the dev server, tokens and policies. |
 | mssql | 2019-latest → **2025-latest** | 2017 (skipped in CI, as today), 2019, 2022, 2025 | amd64 only, document it. Check the TLS/encrypt defaults with SQL 2022+. |
-| azurite | 3.34.0 (`DefaultVersion`) → **3.37.0** | 3.37.0 | Already pinned; bump only. |
+| azurite | 3.34.0 (`DefaultVersion`) → **3.37.0** | 3.37.0 | Already pinned; bump only. Bump `azblob` v1.6.1 → v1.7.0 in the same step (Phase 3 hold). |
 | splunk | latest → **10.4** | 10.0, 10.2, 10.4 | amd64 only, document it. Add the `SPLUNK_GENERAL_TERMS` acceptance env (believed required since 9.4/10). |
 
 For every row:
