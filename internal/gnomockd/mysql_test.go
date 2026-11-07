@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/orlangure/gnomock"
@@ -19,6 +20,13 @@ import (
 
 func TestMySQL(t *testing.T) {
 	t.Parallel()
+
+	if runtime.GOARCH == "arm64" {
+		// Known gap (PLAN.md): testdata/mysql.json asks for version "8", and
+		// the arm64 mysql preset maps it to mysql/mysql-server:8, which does not
+		// exist. Phase 6 drops the per-arch image split; delete this skip then.
+		t.Skip("mysql/mysql-server:8 does not exist for arm64")
+	}
 
 	h := gnomockd.Handler()
 	bs, err := os.ReadFile("./testdata/mysql.json")

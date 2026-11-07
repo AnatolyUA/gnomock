@@ -150,6 +150,13 @@ upgrade didn't change behavior, rather than describing the new behavior.
         picks for its 5.7 test) is amd64 only. The `5.7.32` case of `preset/mysql`
         `TestPreset` is skipped on arm64 only. Phase 6 removes the skip together with
         5.7 and the per-arch split.
+  - [x] **Known gap:** gnomockd `TestMySQL` asks for version `"8"`
+        (`internal/gnomockd/testdata/mysql.json`). The arm64 preset
+        (`preset/mysql/preset_arm64.go`) maps that to `mysql/mysql-server:8`, which
+        doesn't exist, so the request fails. This is a real arm64 bug from the
+        per-arch split: any arm64 user asking for a tag that only `library/mysql`
+        publishes hits it. The test is skipped on arm64 only. Phase 6 removes the skip
+        together with the per-arch split.
 
 ## Phase 3: Go 1.26 and same-major dependency bumps
 
@@ -209,7 +216,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 | Preset | Default: old → new | Test matrix (new) | Extra work |
 |---|---|---|---|
 | postgres | 16.2 → **18** | 15, 16, 17, 18 | PG 18 changed the image's data-dir layout. Check the init/queries file handling. |
-| mysql | 8.0.22 → **9.7** (LTS) | 8.4, 9.7, 26.10 | Delete `preset_arm64.go`/`preset_amd64.go` and use `library/mysql` everywhere. Delete the arm64 skip of the 5.7.32 case in `preset_test.go` (Phase 2 known gap). `mysql_native_password` is gone in 9.x, so verify `caching_sha2_password` over plain TCP. |
+| mysql | 8.0.22 → **9.7** (LTS) | 8.4, 9.7, 26.10 | Delete `preset_arm64.go`/`preset_amd64.go` and use `library/mysql` everywhere. Delete the arm64 skips of the 5.7.32 case in `preset_test.go` and of gnomockd `TestMySQL` (Phase 2 known gaps). `mysql_native_password` is gone in 9.x, so verify `caching_sha2_password` over plain TCP. |
 | mariadb | 10.5.8 → **12.3** (LTS) | 10.11, 11.4, 11.8, 12.3, 13.0 | MariaDB 11+ images have no `mysql*` binaries. Check that the healthcheck/init doesn't call them. |
 | redis | 6.0.9 → **8.10** | 6.2, 7.2, 7.4, 8.2, 8.10 | Driver is v9 (Phase 5). |
 | mongo | 5.0 → **9.0** | 7.0, 8.0, 8.3, 9.0 | Driver is v2 (Phase 5). |
