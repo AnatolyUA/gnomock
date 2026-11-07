@@ -53,6 +53,7 @@ var testdataPresetAliases = map[string]string{
 
 type swaggerSchema struct {
 	Ref                  string                   `yaml:"$ref"`
+	Type                 string                   `yaml:"type"`
 	Properties           map[string]swaggerSchema `yaml:"properties"`
 	AdditionalProperties *swaggerSchema           `yaml:"additionalProperties"`
 }
@@ -305,6 +306,8 @@ func testdataMismatches(t *testing.T, doc *swaggerDoc, file string) []string {
 			fmt.Sprintf("%s: options key %%q is not a go field of gnomock.Options", base),
 			toSet(jsonFieldNames(t, reflect.TypeOf(gnomock.Options{}))),
 		)...)
+		mismatches = append(mismatches, valueTypeMismatches(t, raw, doc.optionsSchema(t),
+			fmt.Sprintf("%s: options", base))...)
 	}
 
 	if raw, ok := body["preset"]; ok {
@@ -317,9 +320,78 @@ func testdataMismatches(t *testing.T, doc *swaggerDoc, file string) []string {
 			fmt.Sprintf("%s: preset key %%q is not a go field of the %s preset", base, name),
 			toSet(jsonFieldNames(t, reflect.TypeOf(p))),
 		)...)
+		mismatches = append(mismatches, valueTypeMismatches(t, raw, doc.presetSchema(t, name),
+			fmt.Sprintf("%s: preset", base))...)
 	}
 
 	return mismatches
+}
+
+// valueTypeMismatches reports every key of the raw JSON object whose value
+// doesn't match the "type" of the corresponding swagger property. Properties
+// without an inline type (e.g. $ref) and unknown keys are skipped; unknown
+// keys are reported by unknownKeys.
+func valueTypeMismatches(t *testing.T, raw json.RawMessage, schema swaggerSchema, prefix string) []string {
+	t.Helper()
+
+	var obj map[string]json.RawMessage
+
+	require.NoError(t, json.Unmarshal(raw, &obj))
+
+	mismatches := []string{}
+
+	for k, v := range obj {
+		prop, ok := schema.Properties[k]
+		if !ok || prop.Type == "" {
+			continue
+		}
+
+		if got := jsonValueType(t, v); !swaggerTypeAccepts(prop.Type, got) {
+			mismatches = append(mismatches,
+				fmt.Sprintf("%s key %q is %s, swagger type is %s", prefix, k, got, prop.Type))
+		}
+	}
+
+	return mismatches
+}
+
+// jsonValueType returns the JSON type of a raw value: string, integer,
+// number, boolean, array, object or null.
+func jsonValueType(t *testing.T, raw json.RawMessage) string {
+	t.Helper()
+
+	var v any
+
+	dec := json.NewDecoder(strings.NewReader(string(raw)))
+	dec.UseNumber()
+	require.NoError(t, dec.Decode(&v))
+
+	switch val := v.(type) {
+	case string:
+		return "string"
+	case json.Number:
+		if _, err := val.Int64(); err == nil {
+			return "integer"
+		}
+
+		return "number"
+	case bool:
+		return "boolean"
+	case []any:
+		return "array"
+	case map[string]any:
+		return "object"
+	default:
+		return "null"
+	}
+}
+
+func swaggerTypeAccepts(swaggerType, jsonType string) bool {
+	if swaggerType == jsonType {
+		return true
+	}
+
+	return swaggerType == "number" && jsonType == "integer"
 }
 
 // unknownKeys reports every key of the raw JSON object that is missing from
@@ -355,8 +427,8 @@ func TestSwaggerPresetJSONTags(t *testing.T) {
 
 	knownGaps := []string{
 		// Known gap: k3s exposes untagged exported fields that are decoded
-		// from JSON by their Go names but are not documented. Not scheduled
-		// in PLAN.md yet.
+		// from JSON by their Go names but are not documented. PLAN.md
+		// Phase 7 documents them.
 		`kubernetes: go field "Port" missing from swagger`,
 		`kubernetes: go field "UseDynamicPort" missing from swagger`,
 		`kubernetes: go field "K3sServerFlags" missing from swagger`,
@@ -414,11 +486,11 @@ func TestSwaggerResponseJSONTags(t *testing.T) {
 
 	knownGaps := []string{
 		// Known gap: the response port objects include "host_port" (always 0
-		// in responses), but swagger named-ports doesn't document it. Not
-		// scheduled in PLAN.md yet.
+		// in responses), but swagger named-ports doesn't document it. PLAN.md
+		// Phase 7 documents it.
 		`named-ports: go field "host_port" missing from swagger`,
 		// Known gap: start/stop failures may include the "container" object,
-		// but swagger documents only "error". Not scheduled in PLAN.md yet.
+		// but swagger documents only "error". PLAN.md Phase 7 documents it.
 		`start-failed: go field "container" missing from swagger`,
 		`stop-failed: go field "container" missing from swagger`,
 	}
@@ -469,4 +541,34 @@ func TestSwaggerResponseJSONTags(t *testing.T) {
 
 	require.ElementsMatch(t, knownGaps, mismatches,
 		"new mismatch between response types and swagger, or a known gap was fixed: update knownGaps")
+}
+
+func TestSwaggerValueTypeCheck(t *testing.T) {
+	t.Parallel()
+
+	schema := swaggerSchema{Properties: map[string]swaggerSchema{
+		"version": {Type: "string"},
+		"timeout": {Type: "integer"},
+		"ratio":   {Type: "number"},
+		"debug":   {Type: "boolean"},
+		"env":     {Type: "array"},
+		"ref":     {Ref: "#/components/schemas/x"},
+	}}
+
+	good := `{"version":"1","timeout":5,"ratio":1,"debug":true,"env":[],"ref":"anything","unknown":1}`
+	require.Empty(t, valueTypeMismatches(t, json.RawMessage(good), schema, "x"))
+
+	bad := `{"version":1,"timeout":1.5,"ratio":"1","debug":"true","env":{}}`
+	require.ElementsMatch(t, []string{
+		`x key "version" is integer, swagger type is string`,
+		`x key "timeout" is number, swagger type is integer`,
+		`x key "ratio" is string, swagger type is number`,
+		`x key "debug" is string, swagger type is boolean`,
+		`x key "env" is object, swagger type is array`,
+	}, valueTypeMismatches(t, json.RawMessage(bad), schema, "x"))
+
+	// The real swagger options schema must declare inline types, otherwise
+	// the testdata type check above would be vacuous.
+	opts := loadSwagger(t).optionsSchema(t)
+	require.Equal(t, "integer", opts.Properties["timeout"].Type)
 }

@@ -205,7 +205,7 @@ func TestStartRequestTimeoutEncoding(t *testing.T) {
 		name    string
 		body    string
 		want    time.Duration
-		wantErr string
+		wantErr bool
 	}{
 		{name: "nanoseconds", body: `{"options":{"timeout":30000000000}}`, want: 30 * time.Second},
 		{name: "zero", body: `{"options":{"timeout":0}}`, want: 0},
@@ -214,13 +214,13 @@ func TestStartRequestTimeoutEncoding(t *testing.T) {
 			// Current behavior: duration strings are rejected.
 			name:    "duration string",
 			body:    `{"options":{"timeout":"30s"}}`,
-			wantErr: "cannot unmarshal string into Go struct field",
+			wantErr: true,
 		},
 		{
 			// Current behavior: fractional values are rejected.
 			name:    "fractional",
 			body:    `{"options":{"timeout":1.5}}`,
-			wantErr: "cannot unmarshal number 1.5",
+			wantErr: true,
 		},
 	}
 
@@ -229,8 +229,14 @@ func TestStartRequestTimeoutEncoding(t *testing.T) {
 			t.Parallel()
 
 			sr, err := decodeStartRequest(t, "postgres", []byte(tt.body))
-			if tt.wantErr != "" {
-				require.ErrorContains(t, err, tt.wantErr)
+
+			if tt.wantErr {
+				// Assert the error type rather than encoding/json's message,
+				// which differs between Go versions (json/v2).
+				var typeErr *json.UnmarshalTypeError
+
+				require.ErrorAs(t, err, &typeErr)
+
 				return
 			}
 

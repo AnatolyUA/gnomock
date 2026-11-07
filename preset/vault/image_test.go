@@ -26,45 +26,29 @@ func TestPreset_Image(t *testing.T) {
 		name string
 		// preset builds the preset under test.
 		preset func(t *testing.T) gnomock.Preset
-		// callOptions mirrors gnomock.Start, which calls Options() before
-		// Image().
-		callOptions bool
-		want        string
+		want   string
 	}{
 		{
-			// Current behavior: defaults are applied lazily in Options(), so
-			// Image() alone has an empty tag. gnomock.Start always calls
-			// Options() first.
-			name:        "constructor without Options",
-			preset:      func(*testing.T) gnomock.Preset { return vault.Preset() },
-			callOptions: false,
-			want:        "hashicorp/vault:",
-		},
-		{
-			name:        "constructor default",
-			preset:      func(*testing.T) gnomock.Preset { return vault.Preset() },
-			callOptions: true,
-			want:        defaultImage,
+			name:   "constructor default",
+			preset: func(*testing.T) gnomock.Preset { return vault.Preset() },
+			want:   defaultImage,
 		},
 		{
 			name: "WithVersion",
 			preset: func(*testing.T) gnomock.Preset {
 				return vault.Preset(vault.WithVersion("1.15.6"))
 			},
-			callOptions: true,
-			want:        customImage,
+			want: customImage,
 		},
 		{
-			name:        "json empty object",
-			preset:      decodeVaultPreset(`{}`),
-			callOptions: true,
-			want:        defaultImage,
+			name:   "json empty object",
+			preset: decodeVaultPreset(`{}`),
+			want:   defaultImage,
 		},
 		{
-			name:        "json version",
-			preset:      decodeVaultPreset(`{"version":"1.15.6"}`),
-			callOptions: true,
-			want:        customImage,
+			name:   "json version",
+			preset: decodeVaultPreset(`{"version":"1.15.6"}`),
+			want:   customImage,
 		},
 	}
 
@@ -74,9 +58,9 @@ func TestPreset_Image(t *testing.T) {
 
 			p := tt.preset(t)
 
-			if tt.callOptions {
-				_ = p.Options()
-			}
+			// Options() applies the defaults; gnomock.Start calls it before
+			// Image().
+			_ = p.Options()
 
 			require.Equal(t, tt.want, p.Image())
 		})

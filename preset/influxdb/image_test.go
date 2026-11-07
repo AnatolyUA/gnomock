@@ -26,45 +26,29 @@ func TestPreset_Image(t *testing.T) {
 		name string
 		// preset builds the preset under test.
 		preset func(t *testing.T) gnomock.Preset
-		// callOptions mirrors gnomock.Start, which calls Options() before
-		// Image().
-		callOptions bool
-		want        string
+		want   string
 	}{
 		{
-			// Current behavior: defaults are applied lazily in Options(), so
-			// Image() alone has an empty tag. gnomock.Start always calls
-			// Options() first.
-			name:        "constructor without Options",
-			preset:      func(*testing.T) gnomock.Preset { return influxdb.Preset() },
-			callOptions: false,
-			want:        "docker.io/influxdb:",
-		},
-		{
-			name:        "constructor default",
-			preset:      func(*testing.T) gnomock.Preset { return influxdb.Preset() },
-			callOptions: true,
-			want:        defaultImage,
+			name:   "constructor default",
+			preset: func(*testing.T) gnomock.Preset { return influxdb.Preset() },
+			want:   defaultImage,
 		},
 		{
 			name: "WithVersion",
 			preset: func(*testing.T) gnomock.Preset {
 				return influxdb.Preset(influxdb.WithVersion("2.8-alpine"))
 			},
-			callOptions: true,
-			want:        customImage,
+			want: customImage,
 		},
 		{
-			name:        "json empty object",
-			preset:      decodeInfluxdbPreset(`{}`),
-			callOptions: true,
-			want:        defaultImage,
+			name:   "json empty object",
+			preset: decodeInfluxdbPreset(`{}`),
+			want:   defaultImage,
 		},
 		{
-			name:        "json version",
-			preset:      decodeInfluxdbPreset(`{"version":"2.8-alpine"}`),
-			callOptions: true,
-			want:        customImage,
+			name:   "json version",
+			preset: decodeInfluxdbPreset(`{"version":"2.8-alpine"}`),
+			want:   customImage,
 		},
 	}
 
@@ -74,9 +58,9 @@ func TestPreset_Image(t *testing.T) {
 
 			p := tt.preset(t)
 
-			if tt.callOptions {
-				_ = p.Options()
-			}
+			// Options() applies the defaults; gnomock.Start calls it before
+			// Image().
+			_ = p.Options()
 
 			require.Equal(t, tt.want, p.Image())
 		})

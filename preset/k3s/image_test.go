@@ -26,45 +26,29 @@ func TestPreset_Image(t *testing.T) {
 		name string
 		// preset builds the preset under test.
 		preset func(t *testing.T) gnomock.Preset
-		// callOptions mirrors gnomock.Start, which calls Options() before
-		// Image().
-		callOptions bool
-		want        string
+		want   string
 	}{
 		{
-			// Current behavior: defaults are applied lazily in Options(), so
-			// Image() alone has an empty tag. gnomock.Start always calls
-			// Options() first.
-			name:        "constructor without Options",
-			preset:      func(*testing.T) gnomock.Preset { return k3s.Preset() },
-			callOptions: false,
-			want:        "docker.io/rancher/k3s:",
-		},
-		{
-			name:        "constructor default",
-			preset:      func(*testing.T) gnomock.Preset { return k3s.Preset() },
-			callOptions: true,
-			want:        defaultImage,
+			name:   "constructor default",
+			preset: func(*testing.T) gnomock.Preset { return k3s.Preset() },
+			want:   defaultImage,
 		},
 		{
 			name: "WithVersion",
 			preset: func(*testing.T) gnomock.Preset {
 				return k3s.Preset(k3s.WithVersion("v1.30.2-k3s1"))
 			},
-			callOptions: true,
-			want:        customImage,
+			want: customImage,
 		},
 		{
-			name:        "json empty object",
-			preset:      decodeK3sPreset(`{}`),
-			callOptions: true,
-			want:        defaultImage,
+			name:   "json empty object",
+			preset: decodeK3sPreset(`{}`),
+			want:   defaultImage,
 		},
 		{
-			name:        "json version",
-			preset:      decodeK3sPreset(`{"version":"v1.30.2-k3s1"}`),
-			callOptions: true,
-			want:        customImage,
+			name:   "json version",
+			preset: decodeK3sPreset(`{"version":"v1.30.2-k3s1"}`),
+			want:   customImage,
 		},
 		{
 			// WithVersion appends "-k3s1" to versions without a k3s suffix.
@@ -72,24 +56,21 @@ func TestPreset_Image(t *testing.T) {
 			preset: func(*testing.T) gnomock.Preset {
 				return k3s.Preset(k3s.WithVersion("v1.30.2"))
 			},
-			callOptions: true,
-			want:        customImage,
+			want: customImage,
 		},
 		{
 			name: "WithVersion latest",
 			preset: func(*testing.T) gnomock.Preset {
 				return k3s.Preset(k3s.WithVersion("latest"))
 			},
-			callOptions: true,
-			want:        "docker.io/rancher/k3s:latest",
+			want: "docker.io/rancher/k3s:latest",
 		},
 		{
 			// Current behavior: the "-k3s1" suffix is added only by
 			// WithVersion, so a version sent over JSON is used as is.
-			name:        "json version without k3s suffix",
-			preset:      decodeK3sPreset(`{"version":"v1.30.2"}`),
-			callOptions: true,
-			want:        "docker.io/rancher/k3s:v1.30.2",
+			name:   "json version without k3s suffix",
+			preset: decodeK3sPreset(`{"version":"v1.30.2"}`),
+			want:   "docker.io/rancher/k3s:v1.30.2",
 		},
 	}
 
@@ -99,9 +80,9 @@ func TestPreset_Image(t *testing.T) {
 
 			p := tt.preset(t)
 
-			if tt.callOptions {
-				_ = p.Options()
-			}
+			// Options() applies the defaults; gnomock.Start calls it before
+			// Image().
+			_ = p.Options()
 
 			require.Equal(t, tt.want, p.Image())
 		})

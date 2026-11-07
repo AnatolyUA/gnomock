@@ -79,13 +79,13 @@ upgrade didn't change behavior, rather than describing the new behavior.
 - [x] **`WithOptions` and the gnomockd JSON contract.**
   - [x] Golden test: decode a `startRequest` JSON containing every documented field,
         apply `WithOptions`, assert the resulting `Options`. Today this test documents
-        the bug: `privileged`, `cmd`, `disable_cleanup`, `use_local_images_first` and
-        `auth` are dropped. It gets flipped in Phase 4.
+        the bug: 11 fields are dropped (the Phase 4 list, including `privileged`, `cmd`,
+        `disable_cleanup`, `use_local_images_first` and `auth`). It gets flipped in Phase 4.
   - [x] Golden test of the response JSON for `Container` and for errors
         (`internal/errors`).
   - [x] Validate every `internal/gnomockd/testdata/*.json` against
-        `swagger/swagger.yaml`, and check that preset JSON tags match the swagger
-        properties.
+        `swagger/swagger.yaml` (key names, plus value types for scalar properties), and
+        check that preset JSON tags match the swagger properties.
 - [x] **Sidecar cleaner.**
   - [x] Round-trip tests for `generateID`/`parseID` (`container.go:70-89`).
   - [x] Integration test: a sidecar exists after `Start`, and is gone after `Stop`.
@@ -159,10 +159,13 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       `Privileged`, `Cmd`, `Entrypoint`, `DisableAutoCleanup`, `UseLocalImagesFirst`,
       `Auth`, `HostMounts`, `ExtraHosts`, `Reuse`, `CustomImage`, `User`. Then flip the
       Phase 1 golden test, and add the missing fields to `swagger.yaml`.
-- [ ] **`pullImage` (`docker.go:90`).** Decode the JSON message stream and surface
+- [ ] **`pullImage` (`docker.go:101`).** Decode the JSON message stream and surface
       `{"error": ...}` entries instead of discarding them.
 - [ ] **Error matching.** Replace daemon error-string matching with `cerrdefs`
       (`IsConflict` and friends) where the API supports it. Keep the Phase 1 tests.
+      Expected flips: the "Current behavior" cases in `TestIsDeletionAlreadyInProgessError`
+      (`docker_internal_test.go`) that return false for a missing client prefix or an
+      extra wrap.
 - [ ] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`).
       `preset/mysql/preset.go:72-74` and `preset/mariadb/preset.go:70-72` each call
       `mysqldriver.SetLogger` inside their own `sync.Once`. Concurrent `Options()` calls

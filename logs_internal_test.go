@@ -169,7 +169,7 @@ func TestCopyf_errors(t *testing.T) {
 			// ('p' == 112).
 			name:    "non-multiplexed stream",
 			src:     bytes.NewBufferString("plain text log line\n"),
-			wantMsg: "unrecognized stream: 112",
+			wantMsg: "unrecognized stream",
 		},
 		{
 			// Current behavior: input shorter than a frame header is
@@ -194,7 +194,7 @@ func TestCopyf_errors(t *testing.T) {
 				bytes.NewReader(stdFrame(stdcopy.Systemerr, "boom")),
 				bytes.NewReader(stdFrame(stdcopy.Stdout, "after")),
 			),
-			wantMsg: "error from daemon in stream: boom",
+			wantMsg: "boom",
 			wantDst: "before",
 		},
 	}
@@ -211,7 +211,9 @@ func TestCopyf_errors(t *testing.T) {
 			case tt.wantErr != nil:
 				require.ErrorIs(t, err, tt.wantErr)
 			case tt.wantMsg != "":
-				require.EqualError(t, err, tt.wantMsg)
+				// Only a stable fragment: the exact wording belongs to
+				// moby's stdcopy and may change between versions.
+				require.ErrorContains(t, err, tt.wantMsg)
 			default:
 				require.NoError(t, err)
 			}

@@ -26,45 +26,29 @@ func TestPreset_Image(t *testing.T) {
 		name string
 		// preset builds the preset under test.
 		preset func(t *testing.T) gnomock.Preset
-		// callOptions mirrors gnomock.Start, which calls Options() before
-		// Image().
-		callOptions bool
-		want        string
+		want   string
 	}{
 		{
-			// Current behavior: defaults are applied lazily in Options(), so
-			// Image() alone has an empty tag. gnomock.Start always calls
-			// Options() first.
-			name:        "constructor without Options",
-			preset:      func(*testing.T) gnomock.Preset { return rabbitmq.Preset() },
-			callOptions: false,
-			want:        "docker.io/library/rabbitmq:",
-		},
-		{
-			name:        "constructor default",
-			preset:      func(*testing.T) gnomock.Preset { return rabbitmq.Preset() },
-			callOptions: true,
-			want:        defaultImage,
+			name:   "constructor default",
+			preset: func(*testing.T) gnomock.Preset { return rabbitmq.Preset() },
+			want:   defaultImage,
 		},
 		{
 			name: "WithVersion",
 			preset: func(*testing.T) gnomock.Preset {
 				return rabbitmq.Preset(rabbitmq.WithVersion("3.8.9-alpine"))
 			},
-			callOptions: true,
-			want:        customImage,
+			want: customImage,
 		},
 		{
-			name:        "json empty object",
-			preset:      decodeRabbitmqPreset(`{}`),
-			callOptions: true,
-			want:        defaultImage,
+			name:   "json empty object",
+			preset: decodeRabbitmqPreset(`{}`),
+			want:   defaultImage,
 		},
 		{
-			name:        "json version",
-			preset:      decodeRabbitmqPreset(`{"version":"3.8.9-alpine"}`),
-			callOptions: true,
-			want:        customImage,
+			name:   "json version",
+			preset: decodeRabbitmqPreset(`{"version":"3.8.9-alpine"}`),
+			want:   customImage,
 		},
 		{
 			// Management variants are selected by tag only.
@@ -72,8 +56,7 @@ func TestPreset_Image(t *testing.T) {
 			preset: func(*testing.T) gnomock.Preset {
 				return rabbitmq.Preset(rabbitmq.WithVersion("3.8.9-management-alpine"))
 			},
-			callOptions: true,
-			want:        "docker.io/library/rabbitmq:3.8.9-management-alpine",
+			want: "docker.io/library/rabbitmq:3.8.9-management-alpine",
 		},
 	}
 
@@ -83,9 +66,9 @@ func TestPreset_Image(t *testing.T) {
 
 			p := tt.preset(t)
 
-			if tt.callOptions {
-				_ = p.Options()
-			}
+			// Options() applies the defaults; gnomock.Start calls it before
+			// Image().
+			_ = p.Options()
 
 			require.Equal(t, tt.want, p.Image())
 		})

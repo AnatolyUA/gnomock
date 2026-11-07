@@ -2,55 +2,44 @@ package main
 
 import (
 	"encoding/json"
+	"reflect"
 	"runtime"
 	"testing"
 
-	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/registry"
-	"github.com/orlangure/gnomock/preset/azurite"
-	"github.com/orlangure/gnomock/preset/cassandra"
-	"github.com/orlangure/gnomock/preset/cockroachdb"
-	"github.com/orlangure/gnomock/preset/elastic"
-	"github.com/orlangure/gnomock/preset/influxdb"
-	"github.com/orlangure/gnomock/preset/k3s"
-	"github.com/orlangure/gnomock/preset/kafka"
-	"github.com/orlangure/gnomock/preset/localstack"
-	"github.com/orlangure/gnomock/preset/mariadb"
-	"github.com/orlangure/gnomock/preset/memcached"
-	"github.com/orlangure/gnomock/preset/mongo"
-	"github.com/orlangure/gnomock/preset/mssql"
-	"github.com/orlangure/gnomock/preset/mysql"
-	"github.com/orlangure/gnomock/preset/postgres"
-	"github.com/orlangure/gnomock/preset/rabbitmq"
-	"github.com/orlangure/gnomock/preset/redis"
-	"github.com/orlangure/gnomock/preset/splunk"
-	"github.com/orlangure/gnomock/preset/vault"
 	"github.com/stretchr/testify/require"
 )
 
 // registeredPresets lists every preset gnomockd must serve, keyed by the name
-// each preset passes to registry.Register. internal/registry has no listing
-// function, so this explicit list is the source of truth for the count.
-func registeredPresets() map[string]gnomock.Preset {
-	return map[string]gnomock.Preset{
-		"azurite":     &azurite.P{},
-		"cassandra":   &cassandra.P{},
-		"cockroachdb": &cockroachdb.P{},
-		"elastic":     &elastic.P{},
-		"influxdb":    &influxdb.P{},
-		"kafka":       &kafka.P{},
-		"kubernetes":  &k3s.P{},
-		"localstack":  &localstack.P{},
-		"mariadb":     &mariadb.P{},
-		"memcached":   &memcached.P{},
-		"mongo":       &mongo.P{},
-		"mssql":       &mssql.P{},
-		"mysql":       &mysql.P{},
-		"postgres":    &postgres.P{},
-		"rabbitmq":    &rabbitmq.P{},
-		"redis":       &redis.P{},
-		"splunk":      &splunk.P{},
-		"vault":       &vault.P{},
+// each preset passes to registry.Register, with the package that implements
+// it. internal/registry has no listing function, so this explicit list is the
+// source of truth for the count.
+//
+// This file deliberately does not import any preset package: the registry
+// must be populated only by the blank imports in presets.go, otherwise a
+// preset missing from presets.go would go unnoticed.
+func registeredPresets() map[string]string {
+	const prefix = "github.com/orlangure/gnomock/preset/"
+
+	return map[string]string{
+		"azurite":     prefix + "azurite",
+		"cassandra":   prefix + "cassandra",
+		"cockroachdb": prefix + "cockroachdb",
+		"elastic":     prefix + "elastic",
+		"influxdb":    prefix + "influxdb",
+		"kafka":       prefix + "kafka",
+		"kubernetes":  prefix + "k3s",
+		"localstack":  prefix + "localstack",
+		"mariadb":     prefix + "mariadb",
+		"memcached":   prefix + "memcached",
+		"mongo":       prefix + "mongo",
+		"mssql":       prefix + "mssql",
+		"mysql":       prefix + "mysql",
+		"postgres":    prefix + "postgres",
+		"rabbitmq":    prefix + "rabbitmq",
+		"redis":       prefix + "redis",
+		"splunk":      prefix + "splunk",
+		"vault":       prefix + "vault",
 	}
 }
 
@@ -60,13 +49,17 @@ func TestPresets_registered(t *testing.T) {
 	presets := registeredPresets()
 	require.Len(t, presets, 18)
 
-	for name, want := range presets {
+	for name, wantPkg := range presets {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			p := registry.Find(name)
-			require.NotNil(t, p)
-			require.IsType(t, want, p)
+			require.NotNil(t, p, "preset %q is not registered; is it imported in presets.go?", name)
+
+			typ := reflect.TypeOf(p)
+			require.Equal(t, reflect.Ptr, typ.Kind())
+			require.Equal(t, wantPkg, typ.Elem().PkgPath())
+			require.Equal(t, "P", typ.Elem().Name())
 
 			// gnomockd decodes every request into the preset it finds, so
 			// each lookup must return a new instance.
