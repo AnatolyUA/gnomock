@@ -252,24 +252,27 @@ func (d *docker) waitForContainerNetwork(ctx context.Context, id string, ports N
 			d.log.Infow("waiting for port allocation", "container", id)
 
 			if len(boundNamedPorts) == len(ports) {
-				var gateway string
-
-				for _, ep := range inspectResult.Container.NetworkSettings.Networks {
-					if ep != nil && ep.Gateway.IsValid() {
-						gateway = ep.Gateway.String()
-						break
-					}
-				}
-
 				return &Container{
 					ID:      id,
 					Host:    d.hostAddr(),
 					Ports:   boundNamedPorts,
-					gateway: gateway,
+					gateway: containerGateway(inspectResult.Container.NetworkSettings.Networks),
 				}, nil
 			}
 		}
 	}
+}
+
+// containerGateway returns the gateway address of the first container network
+// endpoint that has a valid gateway, or an empty string if there is none.
+func containerGateway(networks map[string]*network.EndpointSettings) string {
+	for _, ep := range networks {
+		if ep != nil && ep.Gateway.IsValid() {
+			return ep.Gateway.String()
+		}
+	}
+
+	return ""
 }
 
 func (d *docker) exposedPorts(namedPorts NamedPorts) network.PortSet {

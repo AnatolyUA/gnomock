@@ -62,16 +62,16 @@ branch. Each step is a separate commit so it can be reviewed or reverted on its 
 Every new test must pass on the current `master` code first. That way it proves the
 upgrade didn't change behavior, rather than describing the new behavior.
 
-- [ ] **Unit tests for the moby type conversions** (no Docker needed):
-  - [ ] `exposedPorts` (`docker.go:275`): tcp/udp, out-of-range ports skipped.
-  - [ ] `portBindings` (`docker.go:294`): custom `HostPort`, the `isInDocker()`
+- [x] **Unit tests for the moby type conversions** (no Docker needed):
+  - [x] `exposedPorts` (`docker.go:275`): tcp/udp, out-of-range ports skipped.
+  - [x] `portBindings` (`docker.go:294`): custom `HostPort`, the `isInDocker()`
         `0.0.0.0` branch, and the non-IP `DOCKER_HOST` fallback.
-  - [ ] `boundNamedPorts` (`docker.go:424`): IPv4 plus `::` binding pair, empty binding,
+  - [x] `boundNamedPorts` (`docker.go:424`): IPv4 plus `::` binding pair, empty binding,
         bad `HostPort`.
-  - [ ] Gateway extraction in `waitForContainerNetwork` (`docker.go:257-262`).
-- [ ] **Daemon error matching.**
-  - [ ] Test the duplicate-name regex (`docker.go:30`).
-  - [ ] Test `isDeletionAlreadyInProgessError` (`docker.go:519`).
+  - [x] Gateway extraction in `waitForContainerNetwork` (`docker.go:257-262`).
+- [x] **Daemon error matching.**
+  - [x] Test the duplicate-name regex (`docker.go:30`).
+  - [x] Test `isDeletionAlreadyInProgessError` (`docker.go:519`).
 - [ ] **Image pull and local-image lookup.**
   - [ ] Extract the tag-matching logic from `isExistingLocalImage` (`docker.go:65-88`)
         into a pure function and unit-test it.
