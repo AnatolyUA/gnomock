@@ -98,20 +98,34 @@ jobs:
   test-service-containers:
     name: "[core] service container"
     runs-on: ubuntu-latest
-    services:
-      gnomock:
-        image: orlangure/gnomock:v0.20.0
-        options: -v /var/run/docker.sock:/var/run/docker.sock
-        ports:
-        - 23042:23042
     steps:
+      - uses: actions/checkout@v7
+      - name: Install Task
+        uses: arduino/setup-task@v3
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build orlangure/gnomock image
+        run: task gnomock:build:server
+      # A job's `services:` start before its steps and can't use an image built
+      # in the job, so start the container the way a service container runs.
+      - name: Start Gnomock server
+        run: |
+          docker run -d --name gnomock \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -p 23042:23042 \
+            orlangure/gnomock:amd64
+          timeout 60 bash -c 'until curl -s -o /dev/null localhost:23042; do sleep 1; done'
       - name: Setup postgres
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/runner/.bash_profile
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew install httpie
-          http --ignore-stdin -v :23042/start/postgres options[custom_named_ports][default][protocol]=tcp options[custom_named_ports][default][port]:=5432 options[custom_named_ports][default][host_port]:=15432 options[debug]:=true
+          curl -fsS localhost:23042/start/postgres -d '{
+            "options": {
+              "custom_named_ports": {
+                "default": {"protocol": "tcp", "port": 5432, "host_port": 15432}
+              },
+              "debug": true
+            }
+          }'
 
       - name: Connect 1
         run: PGPASSWORD=password psql -h 127.0.0.1 -U postgres -p 15432 -c "select 1;"
@@ -121,6 +135,10 @@ jobs:
 
       - name: Connect 3
         run: PGPASSWORD=password psql -h 127.0.0.1 -U postgres -p 15432 -c "select 1;"
+
+      - name: Gnomock server logs
+        if: always()
+        run: docker logs gnomock
 
   test-preset:
     name: "[preset] ${{ matrix.preset }}"

@@ -120,8 +120,10 @@ upgrade didn't change behavior, rather than describing the new behavior.
   - [x] Add the triggers: push to any branch, and `workflow_dispatch`.
 - [x] **arm64 job.** On `ubuntu-24.04-arm`: core tests plus the postgres, mysql, redis
       and mongo presets. Also add `GOARCH=arm64 go vet ./...` to the lint job.
-- [ ] **Service-container job.** Stop using `orlangure/gnomock:v0.20.0`. Build the server
+- [x] **Service-container job.** Stop using `orlangure/gnomock:v0.20.0`. Build the server
       image in the job instead, and replace the Homebrew/httpie install with `curl`.
+      `services:` start before the steps, so the job now `docker run`s the built image
+      with the same socket mount and port.
 - [ ] **Removals.** Delete Codecov (upload steps, `codecov.yml`, README badge) and
       `.circleci/`.
 - [ ] **Dockerfiles** (root and `cmd/cleaner`).
