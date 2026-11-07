@@ -24,8 +24,6 @@ const (
 `
 	ciTestPlaceholder = `### preset tests go here
 `
-	circleciJobsPlaceholder = `### circleci jobs go here
-`
 )
 
 var (
@@ -92,10 +90,6 @@ func generate() error {
 		}
 
 		if err := github(pp); err != nil {
-			return err
-		}
-
-		if err := circleci(pp); err != nil {
 			return err
 		}
 	}
@@ -265,30 +259,6 @@ func github(params presetParams) error {
 		ciTestPlaceholder,
 		params,
 	)
-}
-
-func circleci(params presetParams) error {
-	circleciPath := path.Join(".circleci", "config.yml")
-
-	if err := replacePlaceholder(
-		circleciPath,
-		"cmd/generator/templates/.circleci/config.yml.template",
-		ciTestPlaceholder,
-		params,
-	); err != nil {
-		return fmt.Errorf("can't create circleci job: %w", err)
-	}
-
-	if err := replacePlaceholder(
-		circleciPath,
-		"cmd/generator/templates/.circleci/jobs.template",
-		circleciJobsPlaceholder,
-		params,
-	); err != nil {
-		return fmt.Errorf("can't add circleci job to config.yml: %w", err)
-	}
-
-	return nil
 }
 
 // replacePlaceholder replaces `placeholder` in `targetFile` with the result of

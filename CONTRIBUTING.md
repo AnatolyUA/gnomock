@@ -86,10 +86,8 @@ Gnomock:
 
 1. Update [README](README.md) using the links to the new packages/docs.
 
-1. Add a job to test the new preset to [Github
-   Actions](https://github.com/orlangure/gnomock/blob/master/.github/workflows/test.yaml)
-   and
-   [CircleCI](https://github.com/orlangure/gnomock/blob/master/.circleci/config.yml).
+1. Add the new preset to the `test-preset` matrix in [Github
+   Actions](https://github.com/orlangure/gnomock/blob/master/.github/workflows/test.yaml).
 
 #### Preset Generator
 

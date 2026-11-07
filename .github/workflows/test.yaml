@@ -164,6 +164,7 @@ jobs:
           - {preset: cassandra, server: TestCassandra}
           - {preset: azurite, server: TestAzurite}
           - {preset: vault, server: TestVault}
+          ### preset tests go here
     runs-on: ubuntu-latest
     env:
       # Only the localstack entry gets the token (used by the 2026.x test).
