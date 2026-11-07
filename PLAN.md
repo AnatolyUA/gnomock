@@ -163,6 +163,12 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       `{"error": ...}` entries instead of discarding them.
 - [ ] **Error matching.** Replace daemon error-string matching with `cerrdefs`
       (`IsConflict` and friends) where the API supports it. Keep the Phase 1 tests.
+- [ ] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`).
+      `preset/mysql/preset.go:72-74` and `preset/mariadb/preset.go:70-72` each call
+      `mysqldriver.SetLogger` inside their own `sync.Once`. Concurrent `Options()` calls
+      on both presets (gnomockd serving `/start/mysql` and `/start/mariadb` at once)
+      race on the driver's global logger. Use one shared once, then restore
+      `t.Parallel()` in the `TestPresets_defaultImage` subtests (`cmd/server/presets_test.go`).
 
 ## Phase 5: Major driver upgrades (internal only, no public API change)
 
@@ -194,7 +200,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 | localstack | 0.14.0 → **4.14** | 3.8, 4.14, plus 2026.10 when a token is present | Add a token option. Remove 0.x-specific code (`0.12.2` is already deleted from Docker Hub). Check the services/healthcheck endpoints in 4.x. |
 | vault | 1.13.0 → **2.2** | 2.2 | Review the Vault 2.0 breaking changes that affect the dev server, tokens and policies. |
 | mssql | 2019-latest → **2025-latest** | 2017 (skipped in CI, as today), 2019, 2022, 2025 | amd64 only, document it. Check the TLS/encrypt defaults with SQL 2022+. |
-| azurite | latest → **3.37.0** | 3.37.0 | Pin instead of `latest`. |
+| azurite | 3.34.0 (`DefaultVersion`) → **3.37.0** | 3.37.0 | Already pinned; bump only. |
 | splunk | latest → **10.4** | 10.0, 10.2, 10.4 | amd64 only, document it. Add the `SPLUNK_GENERAL_TERMS` acceptance env (believed required since 9.4/10). |
 
 For every row:
@@ -202,7 +208,9 @@ For every row:
 - [ ] Update the `defaultVersion` constant and the doc comments.
 - [ ] Update the `preset_test.go` matrix.
 - [ ] Update the gnomockd testdata JSON. It is stale today: kafka 2.5.1, localstack 0.11,
-      elastic 8.7, and several `latest` tags.
+      elastic 8.7, and several `latest` tags. Also fix `vault.json`: it nests `options`
+      inside `preset`, so the decoder silently ignores it. Then remove its two allowlist
+      entries in `internal/gnomockd/swagger_test.go`.
 - [ ] Add a `withDefaults` test where one is missing (azurite, cassandra, redis, splunk).
 - [ ] Run the preset and gnomockd tests locally.
 
@@ -210,6 +218,12 @@ For every row:
 
 - [ ] **`swagger/swagger.yaml`.** Update the default versions, the new `Options` fields
       (Phase 4), the LocalStack token option, and the Kafka ZooKeeper deprecation.
+- [ ] **Swagger gaps found in Phase 1** (allowlisted in `internal/gnomockd/swagger_test.go`):
+      cockroachdb `db`/`queries`/`queries_files`, kafka `topic_configs`, the untagged k3s
+      fields `Port`/`UseDynamicPort`/`K3sServerFlags` (document them under their Go names;
+      adding JSON tags would change the wire format), named-port `host_port`, and
+      `container` in the start-failed/stop-failed responses. Document them and shrink
+      the allowlist.
 - [ ] **`cmd/generator` and `cmd/server/presets.go`.** Regenerate and confirm that
       nothing else changes.
 - [ ] **Docs.** Update `README.md` (preset table and versions, supported architectures,
@@ -249,6 +263,11 @@ For every row:
 - **k3s.** Recent versions on this cgroup v1 container host may fail locally. If so, rely
   on CI (cgroup v2).
 - **Disk.** Splunk, mssql, elastic and k3s images are large, so prune between runs.
+- **Docker Hub rate limit (local only).** Anonymous pulls from this session get HTTP 429.
+  The local `dockerd` uses `mirror.gcr.io` as a registry mirror (session config in
+  `/etc/docker/daemon.json`, not in the repo). The mirror can also return 429 for less
+  popular images, which makes tests that always pull (e.g. `TestWaitForContainerNetwork`)
+  flaky locally. Re-run before concluding a failure is real.
 - **cmd/cleaner.** It still `require`s the published gnomock v0.32.0 for anyone building
   outside the workspace. `go.work` fixes local and CI builds only.
 
