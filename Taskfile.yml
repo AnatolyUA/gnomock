@@ -9,13 +9,13 @@ tasks:
     env:
       GOMAXPROCS: 2
     cmds:
-      - go test -race -cover -coverprofile=gnomock-cover.txt -coverpkg=./... -v .
+      - go test -race -v .
 
   test:core:gnomockd:
     env:
       GOMAXPROCS: 2
     cmds:
-      - go test -race -cover -coverprofile=gnomockd-cover.txt -coverpkg=./... -v ./internal/gnomockd -run TestGnomockd
+      - go test -race -v ./internal/gnomockd -run TestGnomockd
       - go test -race -v ./internal/gnomockd -run '^(TestWithOptions|TestStartRequest|TestContainerResponseJSON|TestSwagger)'
 
   test:core:internal:
@@ -23,7 +23,7 @@ tasks:
       GOMAXPROCS: 2
     cmds:
       - |
-        go test -race -cover -coverprofile=internal-cover.txt -v -coverpkg=./... \
+        go test -race -v \
           ./internal/errors \
           ./internal/registry \
           ./internal/cleaner \

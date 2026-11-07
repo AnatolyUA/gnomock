@@ -136,8 +136,11 @@ upgrade didn't change behavior, rather than describing the new behavior.
         against local code.
   - [x] Build the cleaner image from the repo-root context.
   - [x] Add a CI job that builds both images for amd64 and arm64, with no push.
-- [ ] **Taskfile.** Update the build tasks to match. Keep the upload and release tasks
-      unchanged: they push to upstream `orlangure/*`, which only upstream can use.
+- [x] **Taskfile.** Update the build tasks to match. Keep the upload and release tasks
+      unchanged: they push to upstream `orlangure/*`, which only upstream can use. Build
+      tasks lost `--build-arg GOARCH`; the cleaner builds from the root context. The
+      core test tasks dropped the coverage flags but still run the same tests (both
+      gnomockd commands, `./cmd/server` in internal).
 
 ## Phase 3: Go 1.26 and same-major dependency bumps
 
