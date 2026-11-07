@@ -102,7 +102,7 @@ func testPreset(version string) func(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, topicReader.Close())
 
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			topicReader := kafkaclient.NewReader(kafkaclient.ReaderConfig{
 				Brokers:   []string{container.Address(kafka.BrokerPort)},
 				Topic:     "topic-2",

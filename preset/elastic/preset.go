@@ -214,7 +214,7 @@ func (p *P) ingestFile(fName string, client *elasticsearch.Client) (docCount int
 	index := path.Base(fName)
 
 	for decoder := json.NewDecoder(f); ; {
-		var v interface{}
+		var v any
 
 		if err := decoder.Decode(&v); err != nil {
 			if errors.Is(err, io.EOF) {

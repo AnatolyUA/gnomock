@@ -153,8 +153,7 @@ func jsonFieldNames(t *testing.T, typ reflect.Type) []string {
 
 	names := make([]string, 0, typ.NumField())
 
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
+	for f := range typ.Fields() {
 		if !f.IsExported() {
 			continue
 		}
@@ -304,7 +303,7 @@ func testdataMismatches(t *testing.T, doc *swaggerDoc, file string) []string {
 			fmt.Sprintf("%s: options key %%q is not a swagger options property", base),
 			toSet(propertyNames(doc.optionsSchema(t))),
 			fmt.Sprintf("%s: options key %%q is not a go field of gnomock.Options", base),
-			toSet(jsonFieldNames(t, reflect.TypeOf(gnomock.Options{}))),
+			toSet(jsonFieldNames(t, reflect.TypeFor[gnomock.Options]())),
 		)...)
 		mismatches = append(mismatches, valueTypeMismatches(t, raw, doc.optionsSchema(t),
 			fmt.Sprintf("%s: options", base))...)
@@ -474,7 +473,7 @@ func TestSwaggerOptionsJSONTags(t *testing.T) {
 
 	doc := loadSwagger(t)
 
-	goKeys := jsonFieldNames(t, reflect.TypeOf(gnomock.Options{}))
+	goKeys := jsonFieldNames(t, reflect.TypeFor[gnomock.Options]())
 	swaggerKeys := propertyNames(doc.optionsSchema(t))
 
 	require.ElementsMatch(t, knownGaps, compareKeys("options", goKeys, swaggerKeys),
@@ -499,14 +498,14 @@ func TestSwaggerResponseJSONTags(t *testing.T) {
 
 	container := doc.resolve(t, doc.Components.Schemas["container"])
 	mismatches := compareKeys("container",
-		jsonFieldNames(t, reflect.TypeOf(gnomock.Container{})), propertyNames(container))
+		jsonFieldNames(t, reflect.TypeFor[gnomock.Container]()), propertyNames(container))
 
 	namedPorts := doc.resolve(t, container.Properties["ports"])
 	require.NotNil(t, namedPorts.AdditionalProperties)
 
 	port := doc.resolve(t, *namedPorts.AdditionalProperties)
 	mismatches = append(mismatches, compareKeys("named-ports",
-		jsonFieldNames(t, reflect.TypeOf(gnomock.Port{})), propertyNames(port))...)
+		jsonFieldNames(t, reflect.TypeFor[gnomock.Port]()), propertyNames(port))...)
 
 	// Error types are unexported, so their JSON keys are taken from the
 	// encoded errors, with every optional field populated.

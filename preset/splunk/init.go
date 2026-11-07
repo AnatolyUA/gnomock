@@ -313,5 +313,5 @@ type splunkTokenResponse struct {
 }
 
 type splunkSearchcResponse struct {
-	Result map[string]interface{} `json:"result"`
+	Result map[string]any `json:"result"`
 }

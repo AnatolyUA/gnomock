@@ -81,11 +81,11 @@ func decodeStartRequest(t *testing.T, presetName string, body []byte) (*startReq
 }
 
 func exportedOptionsFields() []reflect.StructField {
-	typ := reflect.TypeOf(gnomock.Options{})
+	typ := reflect.TypeFor[gnomock.Options]()
 	fields := make([]reflect.StructField, 0, typ.NumField())
 
-	for i := 0; i < typ.NumField(); i++ {
-		if f := typ.Field(i); f.IsExported() {
+	for f := range typ.Fields() {
+		if f.IsExported() {
 			fields = append(fields, f)
 		}
 	}
@@ -130,7 +130,7 @@ func TestStartRequestGoldenOptions(t *testing.T) {
 			keys = append(keys, k)
 		}
 
-		require.ElementsMatch(t, jsonFieldNames(t, reflect.TypeOf(gnomock.Options{})), keys)
+		require.ElementsMatch(t, jsonFieldNames(t, reflect.TypeFor[gnomock.Options]()), keys)
 	})
 
 	t.Run("decoded like startHandler", func(t *testing.T) {

@@ -166,11 +166,11 @@ func gnomockdPkg(params presetParams) error {
 		}
 	}()
 
-	if err := json.NewEncoder(presetFile).Encode(map[string]interface{}{
-		"preset": map[string]interface{}{
+	if err := json.NewEncoder(presetFile).Encode(map[string]any{
+		"preset": map[string]any{
 			"version": "latest",
 		},
-		"options": map[string]interface{}{},
+		"options": map[string]any{},
 	}); err != nil {
 		return fmt.Errorf("can't write into preset file: %w", err)
 	}

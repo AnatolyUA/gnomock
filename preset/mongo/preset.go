@@ -171,7 +171,7 @@ func (p *P) setupCollection(client *mongodb.Client, dirName, dataFileName string
 	ctx := context.Background()
 
 	for {
-		var val interface{}
+		var val any
 
 		err = dec.Decode(&val)
 		if errors.Is(err, io.EOF) {

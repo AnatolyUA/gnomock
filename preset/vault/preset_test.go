@@ -2,6 +2,7 @@ package vault_test
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/vault/api"
@@ -97,15 +98,7 @@ path "secret/metadata/*" {
 		policies, err := cli.Sys().ListPolicies()
 		require.NoError(t, err)
 
-		found = false
-
-		for _, p := range policies {
-			if p == "policy1" {
-				found = true
-
-				break
-			}
-		}
+		found = slices.Contains(policies, "policy1")
 
 		require.True(t, found, "policy %s was not created", "policy1")
 	}

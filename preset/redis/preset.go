@@ -33,8 +33,8 @@ func Preset(opts ...Option) gnomock.Preset {
 
 // P is a Gnomock Preset implementation for Redis storage.
 type P struct {
-	Values  map[string]interface{} `json:"values"`
-	Version string                 `json:"version"`
+	Values  map[string]any `json:"values"`
+	Version string         `json:"version"`
 }
 
 // Image returns an image that should be pulled to create this container.

@@ -195,7 +195,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       Let `go mod tidy` resolve the indirects.
 - [x] Replace `gorilla/mux` with `net/http` patterns. Routes and the JSON contract
       tests are unchanged; edge-case differences are listed under behavior changes (9).
-- [ ] Run `go fix ./...` (modernizers) as a separate commit.
+- [x] Run `go fix ./...` (modernizers) as a separate commit. It took two passes to
+      converge (the second removes `f := f` copies the first one leaves behind).
 
 ## Phase 4: Bug fixes found during research
 

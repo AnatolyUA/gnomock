@@ -74,16 +74,16 @@ const (
 // kubeconfigHttpd is a representation of the httpd manifest for k3s to
 // automatically apply that will serve the k3s admin kubeconfig at
 // `/kubeconfig.yaml`.
-var kubeconfigHttpd = map[string]interface{}{
+var kubeconfigHttpd = map[string]any{
 	"apiVersion": "v1",
 	"kind":       "Pod",
-	"metadata": map[string]interface{}{
+	"metadata": map[string]any{
 		"name":      "kubeconfig-httpd",
 		"namespace": "kube-system",
 	},
-	"spec": map[string]interface{}{
+	"spec": map[string]any{
 		"hostNetwork": true,
-		"containers": []map[string]interface{}{
+		"containers": []map[string]any{
 			{
 				"name":  "web",
 				"image": "docker.io/library/busybox:latest",
@@ -92,14 +92,14 @@ var kubeconfigHttpd = map[string]interface{}{
 					"-p", strconv.Itoa(kubeconfigPort),
 				},
 				"workingDir": "/var/gnomock/",
-				"ports": []map[string]interface{}{
+				"ports": []map[string]any{
 					{
 						"name":          "http",
 						"containerPort": kubeconfigPort,
 						"protocol":      "TCP",
 					},
 				},
-				"volumeMounts": []map[string]interface{}{
+				"volumeMounts": []map[string]any{
 					{
 						"name":      "kubeconfig-dir",
 						"mountPath": "/var/gnomock/",
@@ -107,10 +107,10 @@ var kubeconfigHttpd = map[string]interface{}{
 				},
 			},
 		},
-		"volumes": []map[string]interface{}{
+		"volumes": []map[string]any{
 			{
 				"name": "kubeconfig-dir",
-				"hostPath": map[string]interface{}{
+				"hostPath": map[string]any{
 					"path": "/var/gnomock/",
 					"type": "Directory",
 				},

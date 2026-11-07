@@ -25,7 +25,7 @@ func TestPreset(t *testing.T) {
 
 func testPreset(version string) func(t *testing.T) {
 	return func(t *testing.T) {
-		vs := make(map[string]interface{})
+		vs := make(map[string]any)
 
 		vs["a"] = "foo"
 		vs["b"] = 42
@@ -66,7 +66,7 @@ func testPreset(version string) func(t *testing.T) {
 func TestRedis_wrongValue(t *testing.T) {
 	t.Parallel()
 
-	vs := map[string]interface{}{"a": []string{"b", "c"}}
+	vs := map[string]any{"a": []string{"b", "c"}}
 	p := redis.Preset(redis.WithValues(vs))
 
 	c, err := gnomock.Start(p)
