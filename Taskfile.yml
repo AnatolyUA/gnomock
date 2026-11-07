@@ -103,27 +103,27 @@ tasks:
     cmds:
       - task: gnomock:build:cleaner:amd64
       - task: gnomock:build:cleaner:arm64
-    dir: ./cmd/cleaner
+    dir: .
 
   gnomock:build:cleaner:amd64:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --platform linux/amd64 --progress plain --tag orlangure/gnomock-cleaner:amd64 .
+      - docker build --platform linux/amd64 --progress plain --tag orlangure/gnomock-cleaner:amd64 -f cmd/cleaner/Dockerfile .
     status:
       - test -z $release
       - test {{ eq ARCH "amd64" }} == false
-    dir: ./cmd/cleaner
+    dir: .
 
   gnomock:build:cleaner:arm64:
     env:
       DOCKER_BUILDKIT: "1"
     cmds:
-      - docker build --platform linux/arm64 --progress plain --tag orlangure/gnomock-cleaner:arm64 .
+      - docker build --platform linux/arm64 --progress plain --tag orlangure/gnomock-cleaner:arm64 -f cmd/cleaner/Dockerfile .
     status:
       - test -z $release
       - test {{ eq ARCH "arm64" }} == false
-    dir: ./cmd/cleaner
+    dir: .
 
   # to release, set env `release` to true
   gnomock:upload:cleaner:

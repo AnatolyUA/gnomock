@@ -131,11 +131,11 @@ upgrade didn't change behavior, rather than describing the new behavior.
   - [x] Change `golang:latest` to `golang:1.27-alpine`.
   - [x] Use buildx `TARGETOS`/`TARGETARCH` instead of `ARG GOARCH`.
   - [x] Add `-trimpath`.
-- [ ] **Cleaner module.**
-  - [ ] Add a root `go.work` (`.` and `./cmd/cleaner`) so the cleaner builds and tests
+- [x] **Cleaner module.**
+  - [x] Add a root `go.work` (`.` and `./cmd/cleaner`) so the cleaner builds and tests
         against local code.
-  - [ ] Build the cleaner image from the repo-root context.
-  - [ ] Add a CI job that builds both images for amd64 and arm64, with no push.
+  - [x] Build the cleaner image from the repo-root context.
+  - [x] Add a CI job that builds both images for amd64 and arm64, with no push.
 - [ ] **Taskfile.** Update the build tasks to match. Keep the upload and release tasks
       unchanged: they push to upstream `orlangure/*`, which only upstream can use.
 
@@ -289,7 +289,12 @@ For every row:
   re-run and locally in 58s. Re-run once before treating a kafka timeout as real; if it
   recurs, investigate (Phase 6 changes the kafka default anyway).
 - **cmd/cleaner.** It still `require`s the published gnomock v0.32.0 for anyone building
-  outside the workspace. `go.work` fixes local and CI builds only.
+  outside the workspace. `go.work` fixes local and CI builds only. Side effects seen in
+  Phase 2: `./...` from the root now includes `cmd/cleaner` (so `go vet` covers it;
+  golangci-lint still lints only the root module), and the cleaner's stale indirect
+  requirements raise some unbuilt entries of the root module graph (e.g. grpc 1.67 →
+  1.72). The packages actually built for the root module are identical with and without
+  the workspace (`go list -deps -test`), and the server image is built with `GOWORK=off`.
 
 ## Out of scope
 
