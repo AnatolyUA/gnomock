@@ -118,7 +118,7 @@ upgrade didn't change behavior, rather than describing the new behavior.
 - [x] **Go and triggers.**
   - [x] Go matrix 1.26 and 1.27 for core jobs. Preset jobs use 1.27.
   - [x] Add the triggers: push to any branch, and `workflow_dispatch`.
-- [ ] **arm64 job.** On `ubuntu-24.04-arm`: core tests plus the postgres, mysql, redis
+- [x] **arm64 job.** On `ubuntu-24.04-arm`: core tests plus the postgres, mysql, redis
       and mongo presets. Also add `GOARCH=arm64 go vet ./...` to the lint job.
 - [ ] **Service-container job.** Stop using `orlangure/gnomock:v0.20.0`. Build the server
       image in the job instead, and replace the Homebrew/httpie install with `curl`.

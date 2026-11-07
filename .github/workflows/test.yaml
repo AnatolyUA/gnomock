@@ -19,6 +19,8 @@ jobs:
         with:
           version: v2.15.0
           args: --timeout=10m
+      - name: Vet for arm64
+        run: GOARCH=arm64 go vet ./...
 
   test-core:
     name: "[core] gnomock, gnomockd (go ${{ matrix.go }})"
@@ -45,6 +47,32 @@ jobs:
         run: task test:core:gnomockd
       - name: Test internal
         run: task test:core:internal
+
+  test-arm64:
+    name: "[arm64] core, postgres, mysql, redis, mongo"
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+      - name: Get dependencies
+        run: go mod download
+      - name: Install Task
+        uses: arduino/setup-task@v3
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test Gnomock
+        run: task test:core:gnomock
+      - name: Test gnomockd
+        run: task test:core:gnomockd
+      - name: Test internal
+        run: task test:core:internal
+      - name: Test presets
+        run: go test -race -v ./preset/postgres/... ./preset/mysql/... ./preset/redis/... ./preset/mongo/...
+      - name: Test server
+        run: go test -race -v ./internal/gnomockd -run '^(TestPostgres|TestMySQL|TestRedis|TestMongo)'
 
   test-github-action:
     name: "[core] github action"
