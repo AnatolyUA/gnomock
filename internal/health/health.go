@@ -16,12 +16,10 @@ func HTTPGet(ctx context.Context, addr string) error {
 		addr = fmt.Sprintf("http://%s", addr)
 	}
 
-	r, err := http.NewRequest(http.MethodGet, addr, nil) // nolint:gosec
+	r, err := http.NewRequestWithContext(ctx, http.MethodGet, addr, nil) // nolint:gosec
 	if err != nil {
 		return err
 	}
-
-	r = r.WithContext(ctx)
 
 	res, err := http.DefaultClient.Do(r)
 	if err != nil {

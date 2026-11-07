@@ -57,6 +57,7 @@ func TestAzurite(t *testing.T) {
 	require.NoError(t, connErr)
 
 	var maxResults int32 = 200
+
 	options := azblob.ListBlobsFlatOptions{
 		Include:    container.ListBlobsInclude{},
 		Marker:     nil,

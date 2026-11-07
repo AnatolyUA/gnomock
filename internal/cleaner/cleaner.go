@@ -20,12 +20,12 @@ const (
 // context is canceled. After that, the connection terminates, and it cleaner
 // kill the container with the provided id.
 func Notify(ctx context.Context, addr, id string) error {
-	r, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/sync/%s", addr, id), nil)
+	r, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://%s/sync/%s", addr, id), nil)
 	if err != nil {
 		return err
 	}
 
-	go http.DefaultClient.Do(r.WithContext(ctx)) // nolint:errcheck
+	go http.DefaultClient.Do(r) // nolint:errcheck
 
 	return nil
 }

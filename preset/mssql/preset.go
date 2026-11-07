@@ -78,7 +78,7 @@ func (p *P) Options() []gnomock.Option {
 	return opts
 }
 
-func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
+func (p *P) healthcheck(ctx context.Context, c *gnomock.Container) error {
 	addr := c.Address(gnomock.DefaultPort)
 
 	db, err := p.connect(addr, masterDB)
@@ -92,11 +92,11 @@ func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
 
 	var one int
 
-	return db.QueryRow(`select 1`).Scan(&one)
+	return db.QueryRowContext(ctx, `select 1`).Scan(&one)
 }
 
 func (p *P) initf() gnomock.InitFunc {
-	return func(_ context.Context, c *gnomock.Container) error {
+	return func(ctx context.Context, c *gnomock.Container) error {
 		addr := c.Address(gnomock.DefaultPort)
 
 		db, err := p.connect(addr, masterDB)
@@ -104,7 +104,7 @@ func (p *P) initf() gnomock.InitFunc {
 			return err
 		}
 
-		_, err = db.Exec("create database " + p.DB)
+		_, err = db.ExecContext(ctx, "create database "+p.DB)
 		if err != nil {
 			_ = db.Close()
 			return fmt.Errorf("can't create database '%s': %w", p.DB, err)
@@ -131,7 +131,7 @@ func (p *P) initf() gnomock.InitFunc {
 		}
 
 		for _, q := range p.Queries {
-			_, err = db.Exec(q)
+			_, err = db.ExecContext(ctx, q)
 			if err != nil {
 				return err
 			}

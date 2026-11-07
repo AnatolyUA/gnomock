@@ -57,7 +57,7 @@ func TestPresets_registered(t *testing.T) {
 			require.NotNil(t, p, "preset %q is not registered; is it imported in presets.go?", name)
 
 			typ := reflect.TypeOf(p)
-			require.Equal(t, reflect.Ptr, typ.Kind())
+			require.Equal(t, reflect.Pointer, typ.Kind())
 			require.Equal(t, wantPkg, typ.Elem().PkgPath())
 			require.Equal(t, "P", typ.Elem().Name())
 

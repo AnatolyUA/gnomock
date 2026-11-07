@@ -84,8 +84,8 @@ func (p *P) setDefaults() {
 	}
 }
 
-func healthcheck(_ context.Context, c *gnomock.Container) error {
-	db, err := connect(c, "")
+func healthcheck(ctx context.Context, c *gnomock.Container) error {
+	db, err := connect(ctx, c, "")
 	if err != nil {
 		if db != nil {
 			_ = db.Close()
@@ -100,17 +100,17 @@ func healthcheck(_ context.Context, c *gnomock.Container) error {
 
 	var one int
 
-	return db.QueryRow(`select 1`).Scan(&one)
+	return db.QueryRowContext(ctx, `select 1`).Scan(&one)
 }
 
 func (p *P) initf() gnomock.InitFunc {
-	return func(_ context.Context, c *gnomock.Container) error {
-		db, err := connect(c, "")
+	return func(ctx context.Context, c *gnomock.Container) error {
+		db, err := connect(ctx, c, "")
 		if err != nil {
 			return err
 		}
 
-		_, err = db.Exec("create database " + p.DB)
+		_, err = db.ExecContext(ctx, "create database "+p.DB)
 		if err != nil {
 			_ = db.Close()
 			return err
@@ -118,7 +118,7 @@ func (p *P) initf() gnomock.InitFunc {
 
 		_ = db.Close()
 
-		db, err = connect(c, p.DB)
+		db, err = connect(ctx, c, p.DB)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (p *P) initf() gnomock.InitFunc {
 		}
 
 		for _, q := range p.Queries {
-			_, err = db.Exec(q)
+			_, err = db.ExecContext(ctx, q)
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func (p *P) initf() gnomock.InitFunc {
 	}
 }
 
-func connect(c *gnomock.Container, db string) (*sql.DB, error) {
+func connect(ctx context.Context, c *gnomock.Container, db string) (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%d sslmode=disable user=root dbname=%s",
 		c.Host, c.Port(gnomock.DefaultPort), db,
@@ -158,5 +158,5 @@ func connect(c *gnomock.Container, db string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	return conn, conn.Ping()
+	return conn, conn.PingContext(ctx)
 }

@@ -145,7 +145,7 @@ func (d *swaggerDoc) optionsSchema(t *testing.T) swaggerSchema {
 func jsonFieldNames(t *testing.T, typ reflect.Type) []string {
 	t.Helper()
 
-	for typ.Kind() == reflect.Ptr {
+	for typ.Kind() == reflect.Pointer {
 		typ = typ.Elem()
 	}
 
@@ -260,7 +260,7 @@ func TestSwaggerTestdataRequestKeys(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, files)
 
-	mismatches := []string{}
+	mismatches := make([]string, 0, len(files))
 	for _, file := range files {
 		mismatches = append(mismatches, testdataMismatches(t, doc, file)...)
 	}
@@ -443,7 +443,7 @@ func TestSwaggerPresetJSONTags(t *testing.T) {
 	}
 
 	doc := loadSwagger(t)
-	mismatches := []string{}
+	mismatches := make([]string, 0, len(swaggerStartPresets))
 
 	for _, name := range swaggerStartPresets {
 		p := registry.Find(name)

@@ -90,8 +90,8 @@ func (p *P) Options() []gnomock.Option {
 	return opts
 }
 
-func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
-	db, err := connect(c, defaultDatabase)
+func (p *P) healthcheck(ctx context.Context, c *gnomock.Container) error {
+	db, err := connect(ctx, c, defaultDatabase)
 	if err != nil {
 		if db != nil {
 			_ = db.Close()
@@ -106,20 +106,20 @@ func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
 
 	var one int
 
-	return db.QueryRow(`select 1`).Scan(&one)
+	return db.QueryRowContext(ctx, `select 1`).Scan(&one)
 }
 
 func (p *P) initf() gnomock.InitFunc {
-	return func(_ context.Context, c *gnomock.Container) error {
+	return func(ctx context.Context, c *gnomock.Container) error {
 		if p.DB != defaultDatabase {
-			db, err := connect(c, defaultDatabase)
+			db, err := connect(ctx, c, defaultDatabase)
 			if err != nil {
 				return err
 			}
 
 			defer func() { _ = db.Close() }()
 
-			_, err = db.Exec("create database " + p.DB)
+			_, err = db.ExecContext(ctx, "create database "+p.DB)
 			if err != nil {
 				isDuplicateDB := strings.Contains(err.Error(), fmt.Sprintf(`pq: database "%s" already exists`, p.DB))
 				if !isDuplicateDB {
@@ -128,14 +128,14 @@ func (p *P) initf() gnomock.InitFunc {
 			}
 		}
 
-		db, err := connect(c, p.DB)
+		db, err := connect(ctx, c, p.DB)
 		if err != nil {
 			return err
 		}
 
 		defer func() { _ = db.Close() }()
 
-		if err := p.executeQueries(db); err != nil {
+		if err := p.executeQueries(ctx, db); err != nil {
 			return fmt.Errorf("can't execute setup queries: %w", err)
 		}
 
@@ -153,7 +153,7 @@ func (p *P) setDefaults() {
 	}
 }
 
-func (p *P) executeQueries(db *sql.DB) error {
+func (p *P) executeQueries(ctx context.Context, db *sql.DB) error {
 	if len(p.QueriesFiles) > 0 {
 		for _, f := range p.QueriesFiles {
 			bs, err := os.ReadFile(f) // nolint:gosec
@@ -166,7 +166,7 @@ func (p *P) executeQueries(db *sql.DB) error {
 	}
 
 	for _, q := range p.Queries {
-		_, err := db.Exec(q)
+		_, err := db.ExecContext(ctx, q)
 		if err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func (p *P) executeQueries(db *sql.DB) error {
 	return nil
 }
 
-func connect(c *gnomock.Container, db string) (*sql.DB, error) {
+func connect(ctx context.Context, c *gnomock.Container, db string) (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Host, c.Port(gnomock.DefaultPort),
@@ -187,5 +187,5 @@ func connect(c *gnomock.Container, db string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	return conn, conn.Ping()
+	return conn, conn.PingContext(ctx)
 }

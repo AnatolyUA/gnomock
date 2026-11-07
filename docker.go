@@ -360,7 +360,7 @@ func (d *docker) createContainer(
 		containerConfig.Entrypoint = cfg.Entrypoint
 	}
 
-	mounts := []mount.Mount{}
+	mounts := make([]mount.Mount, 0, len(cfg.HostMounts))
 	for src, dst := range cfg.HostMounts {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,

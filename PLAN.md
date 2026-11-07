@@ -102,7 +102,12 @@ upgrade didn't change behavior, rather than describing the new behavior.
   - [x] Upgrade v1.64.5 → v2.15.0 and migrate `.golangci.yml` to the v2 format
         (`golangci-lint migrate`). `gosimple` and `stylecheck` merge into `staticcheck`.
         `gofmt`, `gofumpt` and `goimports` move to `formatters`. `wsl` becomes `wsl_v5`.
-  - [ ] Fix or justify the new findings.
+  - [x] Fix or justify the new findings. `noctx` (11): presets and `internal/health`,
+        `internal/cleaner` now pass the context through. `govet inline` (2):
+        `reflect.Ptr` → `reflect.Pointer`. `prealloc` (3) and `wsl_v5` (2) fixed.
+        `goconst` (36) is justified, not fixed: goconst ≥ 1.8 also counts composite
+        literals (test tables, k3s manifests), so `exclude-types: [Call, CompositeLit]`
+        keeps the v1 scope.
 - [ ] **Actions versions.** `actions/checkout@v7`, `actions/setup-go@v7`,
       `golangci/golangci-lint-action@v9`, `github/codeql-action@v4`,
       `docker/setup-qemu-action@v4`, `docker/setup-buildx-action@v4`,
@@ -257,6 +262,10 @@ For every row:
    fields that used to be silently ignored.
 7. **Old servers.** The Mongo driver needs server 4.2 or newer, and EOL server versions are
    no longer tested.
+8. **Init and healthcheck honor the start timeout.** The SQL presets (postgres, mysql,
+   mariadb, mssql, cockroachdb) now run their healthcheck and init queries with the
+   context gnomock passes in. An init (e.g. large `WithQueriesFile` migrations) that
+   runs past `WithTimeout` now fails with a context error instead of finishing late.
 
 ## Risks and open verification items
 

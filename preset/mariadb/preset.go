@@ -86,10 +86,10 @@ func (p *P) Options() []gnomock.Option {
 	return opts
 }
 
-func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
+func (p *P) healthcheck(ctx context.Context, c *gnomock.Container) error {
 	addr := c.Address(gnomock.DefaultPort)
 
-	db, err := p.connect(addr)
+	db, err := p.connect(ctx, addr)
 	if err != nil {
 		if db != nil {
 			_ = db.Close()
@@ -104,14 +104,14 @@ func (p *P) healthcheck(_ context.Context, c *gnomock.Container) error {
 
 	var one int
 
-	return db.QueryRow(`select 1`).Scan(&one)
+	return db.QueryRowContext(ctx, `select 1`).Scan(&one)
 }
 
 func (p *P) initf() gnomock.InitFunc {
-	return func(_ context.Context, c *gnomock.Container) error {
+	return func(ctx context.Context, c *gnomock.Container) error {
 		addr := c.Address(gnomock.DefaultPort)
 
-		db, err := p.connect(addr)
+		db, err := p.connect(ctx, addr)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (p *P) initf() gnomock.InitFunc {
 		}
 
 		for _, q := range p.Queries {
-			_, err = db.Exec(q)
+			_, err = db.ExecContext(ctx, q)
 			if err != nil {
 				return err
 			}
@@ -140,7 +140,7 @@ func (p *P) initf() gnomock.InitFunc {
 	}
 }
 
-func (p *P) connect(addr string) (*sql.DB, error) {
+func (p *P) connect(ctx context.Context, addr string) (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?multiStatements=true",
 		p.User, p.Password, addr, p.DB,
@@ -151,7 +151,7 @@ func (p *P) connect(addr string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	return db, db.Ping()
+	return db, db.PingContext(ctx)
 }
 
 func (p *P) setDefaults() {

@@ -26,6 +26,14 @@ linters:
     - unparam
     - whitespace
     - wsl_v5
+  settings:
+    goconst:
+      # goconst >= 1.8 also counts struct/map/slice literal values. Repeated
+      # literals in test tables and Kubernetes manifests read better inline,
+      # so keep the v1 scope. Call is the default exclusion.
+      exclude-types:
+        - Call
+        - CompositeLit
   exclusions:
     generated: lax
     presets:

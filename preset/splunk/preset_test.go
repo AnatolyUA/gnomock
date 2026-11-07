@@ -57,6 +57,7 @@ func TestPreset(t *testing.T) {
 	c, err := gnomock.Start(p)
 
 	defer func() { require.NoError(t, gnomock.Stop(c)) }()
+
 	require.NoError(t, err)
 
 	err = splunk.Ingest(context.Background(), c, "12345678", splunk.Event{
