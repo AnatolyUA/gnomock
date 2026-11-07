@@ -72,10 +72,10 @@ upgrade didn't change behavior, rather than describing the new behavior.
 - [x] **Daemon error matching.**
   - [x] Test the duplicate-name regex (`docker.go:30`).
   - [x] Test `isDeletionAlreadyInProgessError` (`docker.go:519`).
-- [ ] **Image pull and local-image lookup.**
-  - [ ] Extract the tag-matching logic from `isExistingLocalImage` (`docker.go:65-88`)
+- [x] **Image pull and local-image lookup.**
+  - [x] Extract the tag-matching logic from `isExistingLocalImage` (`docker.go:65-88`)
         into a pure function and unit-test it.
-  - [ ] Integration test: `WithUseLocalImagesFirst` with a locally tagged image.
+  - [x] Integration test: `WithUseLocalImagesFirst` with a locally tagged image.
 - [ ] **`WithOptions` and the gnomockd JSON contract.**
   - [ ] Golden test: decode a `startRequest` JSON containing every documented field,
         apply `WithOptions`, assert the resulting `Options`. Today this test documents

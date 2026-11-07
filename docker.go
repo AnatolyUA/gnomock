@@ -69,22 +69,33 @@ func (d *docker) isExistingLocalImage(ctx context.Context, image string) (bool, 
 	}
 
 	for _, img := range result.Items {
-		for _, repoTag := range img.RepoTags {
-			if image == repoTag {
-				return true, nil
-			}
-
-			if !strings.Contains(repoTag, "/") {
-				repoTag = "library/" + repoTag
-			}
-
-			if strings.HasSuffix(image, repoTag) {
-				return true, nil
-			}
+		if hasMatchingRepoTag(image, img.RepoTags) {
+			return true, nil
 		}
 	}
 
 	return false, nil
+}
+
+// hasMatchingRepoTag reports whether any of the local image repoTags refers
+// to the requested image. Tags without a repository namespace are matched as
+// "library/<tag>" suffixes of the requested image.
+func hasMatchingRepoTag(image string, repoTags []string) bool {
+	for _, repoTag := range repoTags {
+		if image == repoTag {
+			return true
+		}
+
+		if !strings.Contains(repoTag, "/") {
+			repoTag = "library/" + repoTag
+		}
+
+		if strings.HasSuffix(image, repoTag) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (d *docker) pullImage(ctx context.Context, image string, cfg *Options) error {
