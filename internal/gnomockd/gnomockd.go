@@ -6,15 +6,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/orlangure/gnomock/internal/errors"
 )
 
 // Handler returns an HTTP handler ready to serve incoming connections.
 func Handler() http.Handler {
-	router := mux.NewRouter()
-	router.HandleFunc("/start/{name}", startHandler()).Methods(http.MethodPost)
-	router.HandleFunc("/stop", stopHandler()).Methods(http.MethodPost)
+	router := http.NewServeMux()
+	router.HandleFunc("POST /start/{name}", startHandler())
+	router.HandleFunc("POST /stop", stopHandler())
 
 	return router
 }

@@ -193,7 +193,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 - [x] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
       `structured-merge-diff` v7 that breaks apimachinery 0.37 (seen in the trial).
       Let `go mod tidy` resolve the indirects.
-- [ ] Replace `gorilla/mux` with `net/http` patterns.
+- [x] Replace `gorilla/mux` with `net/http` patterns. Routes and the JSON contract
+      tests are unchanged; edge-case differences are listed under behavior changes (9).
 - [ ] Run `go fix ./...` (modernizers) as a separate commit.
 
 ## Phase 4: Bug fixes found during research
@@ -304,6 +305,12 @@ For every row:
    mariadb, mssql, cockroachdb) now run their healthcheck and init queries with the
    context gnomock passes in. An init (e.g. large `WithQueriesFile` migrations) that
    runs past `WithTimeout` now fails with a context error instead of finishing late.
+9. **gnomockd router edge cases** (`net/http` instead of `gorilla/mux`). Routes, status
+   codes for valid requests, and response bodies are unchanged. A wrong method still
+   gets 405, now with an `Allow: POST` header and a `Method Not Allowed` body. Unclean
+   paths (`//stop`) still redirect to the clean path, now with 307 (keeps the POST)
+   instead of 301. `/start/a%2Fb` now returns the JSON "preset not found" 404 instead
+   of the plain-text 404.
 
 ## Risks and open verification items
 

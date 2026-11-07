@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/errors"
 	"github.com/orlangure/gnomock/internal/registry"
@@ -16,8 +15,7 @@ import (
 
 func startHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		name := vars["name"]
+		name := r.PathValue("name")
 		p := registry.Find(name)
 
 		if p == nil {
