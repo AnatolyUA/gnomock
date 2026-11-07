@@ -167,16 +167,16 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       older than a module's breaks the workspace). No `go work sync`: it would raise the
       cleaner's indirect requirements, which stay as they are.
 - [ ] Bump every direct dependency to its latest version within the current major:
-  - **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
-  - **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
-  - **Docker:** `moby/moby/{api,client}` v1.56.1 / v0.6.2.
-  - **Database and messaging drivers:**
+  - [x] **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
+  - [ ] **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
+  - [ ] **Docker:** `moby/moby/{api,client}` v1.56.1 / v0.6.2.
+  - [ ] **Database and messaging drivers:**
     - SQL drivers: `go-sql-driver/mysql` v1.10, `lib/pq` v1.12, `go-mssqldb` v1.11.
     - Messaging: `amqp091-go` v1.16, `kafka-go` v0.4.51.
     - Other stores: `gomemcache` latest, `go-elasticsearch/v8` v8.19.x,
       `influxdb-client-go/v2` latest.
-  - **Cloud APIs:** `vault/api` v1.23, `azblob` v1.8.
-  - **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`.
+  - [ ] **Cloud APIs:** `vault/api` v1.23, `azblob` v1.8.
+  - [ ] **Utilities:** `testify` v1.12, `zap` v1.28, `golang.org/x/{mod,sync}`.
 - [ ] Do **not** run a blanket `go get -u` on indirect dependencies. That pulls a
       `structured-merge-diff` v7 that breaks apimachinery 0.37 (seen in the trial).
       Let `go mod tidy` resolve the indirects.
