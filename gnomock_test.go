@@ -271,14 +271,17 @@ func TestGnomock_withEntrypoint(t *testing.T) {
 func TestGnomock_witUseLocalImagesFirst(t *testing.T) {
 	t.Parallel()
 
+	// The two images share "redis:7.2", so a local library/redis:7.2 must not
+	// be mistaken for cimg/redis:7.2. Both images are published for amd64 and
+	// arm64 (circleci/mongo:4.4, used before, is amd64 only).
 	const (
-		mongoImage         = "docker.io/library/mongo:4.4"
-		circleciMongoImage = "docker.io/circleci/mongo:4.4"
+		libraryImage    = "docker.io/library/redis:7.2"
+		nonLibraryImage = "docker.io/cimg/redis:7.2"
 	)
 
-	// this block will ensure having a local library/mongo image
+	// this block will ensure having a local library/redis image
 	container, err := gnomock.StartCustom(
-		mongoImage,
+		libraryImage,
 		gnomock.DefaultTCP(testutil.GoodPort80),
 		gnomock.WithUseLocalImagesFirst(),
 	)
@@ -286,12 +289,12 @@ func TestGnomock_witUseLocalImagesFirst(t *testing.T) {
 	require.NotNil(t, container)
 	require.NoError(t, gnomock.Stop(container))
 
-	t.Run("library mongo image", func(t *testing.T) {
+	t.Run("library image", func(t *testing.T) {
 		t.Parallel()
 
 		// this actually uses the local image
 		container, err := gnomock.StartCustom(
-			mongoImage,
+			libraryImage,
 			gnomock.DefaultTCP(testutil.GoodPort80),
 			gnomock.WithUseLocalImagesFirst(),
 		)
@@ -300,11 +303,11 @@ func TestGnomock_witUseLocalImagesFirst(t *testing.T) {
 		require.NoError(t, gnomock.Stop(container))
 	})
 
-	t.Run("circleci mongo image", func(t *testing.T) {
+	t.Run("non-library image with the same name and tag", func(t *testing.T) {
 		t.Parallel()
 
 		container, err := gnomock.StartCustom(
-			circleciMongoImage,
+			nonLibraryImage,
 			gnomock.DefaultTCP(testutil.GoodPort80),
 			gnomock.WithUseLocalImagesFirst(),
 		)
