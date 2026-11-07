@@ -168,7 +168,7 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       cleaner's indirect requirements, which stay as they are.
 - [ ] Bump every direct dependency to its latest version within the current major:
   - [x] **AWS SDK v2:** the root module plus the config, s3, sqs and sns modules.
-  - [ ] **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
+  - [x] **Kubernetes:** `k8s.io/{api,apimachinery,client-go}` v0.37.2.
   - [ ] **Docker:** `moby/moby/{api,client}` v1.56.1 / v0.6.2.
   - [ ] **Database and messaging drivers:**
     - SQL drivers: `go-sql-driver/mysql` v1.10, `lib/pq` v1.12, `go-mssqldb` v1.11.
