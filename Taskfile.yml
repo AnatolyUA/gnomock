@@ -27,7 +27,8 @@ tasks:
           ./internal/errors \
           ./internal/registry \
           ./internal/cleaner \
-          ./internal/health
+          ./internal/health \
+          ./cmd/server
 
   swagger:update-version:
     cmds:
