@@ -98,7 +98,7 @@ upgrade didn't change behavior, rather than describing the new behavior.
 
 ## Phase 2: Tooling and CI
 
-- [ ] **golangci-lint.**
+- [x] **golangci-lint.**
   - [x] Upgrade v1.64.5 → v2.15.0 and migrate `.golangci.yml` to the v2 format
         (`golangci-lint migrate`). `gosimple` and `stylecheck` merge into `staticcheck`.
         `gofmt`, `gofumpt` and `goimports` move to `formatters`. `wsl` becomes `wsl_v5`.
@@ -108,7 +108,7 @@ upgrade didn't change behavior, rather than describing the new behavior.
         `goconst` (36) is justified, not fixed: goconst ≥ 1.8 also counts composite
         literals (test tables, k3s manifests), so `exclude-types: [Call, CompositeLit]`
         keeps the v1 scope.
-- [ ] **Actions versions.** `actions/checkout@v7`, `actions/setup-go@v7`,
+- [x] **Actions versions.** `actions/checkout@v7`, `actions/setup-go@v7`,
       `golangci/golangci-lint-action@v9`, `github/codeql-action@v4`,
       `docker/setup-qemu-action@v4`, `docker/setup-buildx-action@v4`,
       `arduino/setup-task@v3`.
