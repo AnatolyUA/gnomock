@@ -6,7 +6,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf
-	github.com/docker/go-connections v0.6.0 // indirect
+	github.com/docker/go-connections v0.8.2 // indirect
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.18.1
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -40,8 +40,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.9
 	github.com/aws/aws-sdk-go-v2/service/sns v1.47.10
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.52.11
-	github.com/moby/moby/api v1.54.1
-	github.com/moby/moby/client v0.4.0
+	github.com/moby/moby/api v1.56.1
+	github.com/moby/moby/client v0.6.2
 	go.yaml.in/yaml/v3 v3.0.4
 )
 
