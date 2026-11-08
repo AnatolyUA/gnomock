@@ -17,7 +17,7 @@ const (
 	defaultPassword = "gnoria"
 	defaultDatabase = "mydb"
 	defaultPort     = 3306
-	defaultVersion  = "10.5.8"
+	defaultVersion  = "12.3"
 )
 
 func init() {
@@ -29,7 +29,7 @@ func init() {
 // optionally set up initial state.
 //
 // When used without any configuration, it creates a superuser `gnomock` with
-// password `gnoria`, and `mydb` database. Default MariaDB version is 10.5.8.
+// password `gnoria`, and `mydb` database. Default MariaDB version is 12.3 (LTS).
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

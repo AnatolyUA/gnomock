@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/mariadb:10.5.8"
+		defaultImage = "docker.io/library/mariadb:12.3"
 		customImage  = "docker.io/library/mariadb:11.4"
 	)
 
