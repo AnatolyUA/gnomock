@@ -50,6 +50,8 @@ func TestPreset(t *testing.T) {
 //
 // Local runs on a kernel below 6.19 are not affected: the skip applies only
 // when CI is set.
+//
+//nolint:godox // the TODO above marks a temporary skip
 var kernelGuardedVersions = map[string]bool{"8.0": true, "8.3": true}
 
 func testPreset(version string) func(t *testing.T) {
