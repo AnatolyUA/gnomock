@@ -465,20 +465,11 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
 
 ## Risks and open verification items
 
-- **MongoDB kernel guard (CI skip in place; remove it when 8.0.37 and 8.3.16 are on
-  Docker Hub).** MongoDB 8.x refuses to
-  start on Linux kernels 6.19+ unless the build exempts the kernel (SERVER-121912,
-  SERVER-125742, SERVER-131779): `MongoDB cannot start: Linux kernel versions 6.19 and
-  newer has a known incompatibility with this version of MongoDB`. Both CI runner
-  images (ubuntu-26.04 and ubuntu-24.04-arm) trip it. Status on 2026-11-08: 7.0.45 and
-  9.0.4 start; the newest 8.0 (8.0.34) and 8.3 (8.3.13) images exit. Upstream fixed
-  Ubuntu kernels in 8.0.37 / 8.3.16, which aren't published yet. On amd64 the 8.0
-  container exits after its network is up, so the healthcheck spins until the 10-minute
-  default timeout and the job times out. Options: drop 8.0/8.3 from the matrix for now,
-  skip them in CI until the fixed images ship, or run the mongo jobs on a runner with
-  an older kernel. **Decided:** skip in CI (the `kernelGuardedVersions` map in
-  `preset/mongo/preset_test.go`); delete the map and the skip once the fixed images
-  are published, and consider moving gnomockd `testdata/mongo.json` back to 8.0.
+- **MongoDB kernel guard (CI skip in place).** MongoDB 8.0/8.3 refuse to start on
+  Linux 6.19+ (both CI runner images) until 8.0.37 / 8.3.16 ship; re-checked on
+  2026-11-08, newest are still 8.0.34 and 8.3.13. **Decided:** skip in CI. The cause and
+  the removal steps now live in the `TODO(mongo-kernel-guard)` comment next to
+  `kernelGuardedVersions` in `preset/mongo/preset_test.go`, so they survive this file.
 - ~~**mssql 2022/2025 in CI.**~~ **Resolved in `fa3d768`.** The tests forced
   `WithUser("10001:0")` only when `CI` was set. Current 2022/2025 images use `mssql`
   (UID/GID `10001:10001`), and `/var/opt/mssql` is owned by `root:10001` with mode
