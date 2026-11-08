@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go/format"
 	"log"
 	"os"
 	"path"
@@ -205,13 +206,41 @@ func gnomockdPkg(params presetParams) error {
 // registry adds the new preset to gnomockd preset registry so that it becomes
 // available over HTTP.
 func registry(params presetParams) error {
+	presetsFile := path.Join("cmd", "server", "presets.go")
+
 	if err := replacePlaceholder(
-		path.Join("cmd", "server", "presets.go"),
+		presetsFile,
 		"cmd/generator/templates/cmd/server/presets.go.template",
 		registryPlaceholder,
 		params,
 	); err != nil {
 		return fmt.Errorf("can't generate registry code: %w", err)
+	}
+
+	// the new import is appended at the end; gofmt sorts it into place
+	if err := formatGoFile(presetsFile); err != nil {
+		return fmt.Errorf("can't format registry code: %w", err)
+	}
+
+	return nil
+}
+
+// formatGoFile rewrites a Go source file the way gofmt would.
+//
+// nolint:gosec
+func formatGoFile(file string) error {
+	bs, err := os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("can't read %s: %w", file, err)
+	}
+
+	formatted, err := format.Source(bs)
+	if err != nil {
+		return fmt.Errorf("can't format %s: %w", file, err)
+	}
+
+	if err := os.WriteFile(file, formatted, 0o644); err != nil {
+		return fmt.Errorf("can't write %s: %w", file, err)
 	}
 
 	return nil
