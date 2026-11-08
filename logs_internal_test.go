@@ -39,15 +39,22 @@ func (r errReader) Read([]byte) (int, error) {
 }
 
 // fakeReadCloser is an io.ReadCloser whose Close returns the configured error.
+// When closing is set, Close closes it, so a test can tell that Close has been
+// called.
 type fakeReadCloser struct {
 	io.Reader
 
 	closeErr error
 	closed   bool
+	closing  chan struct{}
 }
 
 func (f *fakeReadCloser) Close() error {
 	f.closed = true
+
+	if f.closing != nil {
+		close(f.closing)
+	}
 
 	return f.closeErr
 }
@@ -282,12 +289,21 @@ func TestCloseLogReader(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rc := &fakeReadCloser{Reader: &bytes.Buffer{}, closeErr: tt.closeErr}
+			rc := &fakeReadCloser{
+				Reader:   &bytes.Buffer{},
+				closeErr: tt.closeErr,
+				closing:  make(chan struct{}),
+			}
 
 			// The task blocks until released, so that closeLogReader waiting
 			// (or not waiting) for it is observable.
 			release := make(chan struct{})
 			finished := make(chan struct{})
+
+			var releaseOnce sync.Once
+
+			releaseTask := func() { releaseOnce.Do(func() { close(release) }) }
+			t.Cleanup(releaseTask)
 
 			eg := &errgroup.Group{}
 			eg.Go(func() error {
@@ -304,17 +320,37 @@ func TestCloseLogReader(t *testing.T) {
 				done <- closeLogReader(rc, eg)()
 			}()
 
+			// Observe only after Close was called, so that the checks below
+			// see closeLogReader past the close.
+			select {
+			case <-rc.closing:
+			case <-time.After(5 * time.Second):
+				t.Fatal("closeLogReader didn't close the reader")
+			}
+
+			var err error
+
 			if tt.wantWait {
 				select {
 				case err := <-done:
 					t.Fatalf("closeLogReader returned before the task finished: %v", err)
 				case <-time.After(100 * time.Millisecond):
 				}
+
+				releaseTask()
+
+				err = <-done
+			} else {
+				// The task is still blocked, so closeLogReader must return
+				// without waiting for it.
+				select {
+				case err = <-done:
+				case <-time.After(5 * time.Second):
+					t.Fatal("closeLogReader waited for the task")
+				}
+
+				releaseTask()
 			}
-
-			close(release)
-
-			err := <-done
 
 			<-finished
 
