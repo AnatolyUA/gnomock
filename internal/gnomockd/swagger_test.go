@@ -240,14 +240,6 @@ func TestSwaggerStartPathsMatchRegistry(t *testing.T) {
 func TestSwaggerTestdataRequestKeys(t *testing.T) {
 	t.Parallel()
 
-	knownGaps := []string{
-		// Known gap: the cockroachdb swagger schema documents only "version"
-		// (see TestSwaggerPresetJSONTags). Fix swagger.yaml in PLAN.md Phase 7.
-		`cockroachdb.json: preset key "db" is not a swagger cockroachdb property`,
-		`cockroachdb.json: preset key "queries" is not a swagger cockroachdb property`,
-		`cockroachdb.json: preset key "queries_files" is not a swagger cockroachdb property`,
-	}
-
 	doc := loadSwagger(t)
 
 	files, err := filepath.Glob("testdata/*.json")
@@ -259,8 +251,7 @@ func TestSwaggerTestdataRequestKeys(t *testing.T) {
 		mismatches = append(mismatches, testdataMismatches(t, doc, file)...)
 	}
 
-	require.ElementsMatch(t, knownGaps, mismatches,
-		"new mismatch between testdata and swagger, or a known gap was fixed: update knownGaps")
+	require.Empty(t, mismatches, "new mismatch between testdata and swagger")
 }
 
 // testdataMismatches checks the keys of one gnomockd request body against
@@ -419,23 +410,6 @@ func unknownKeys(
 func TestSwaggerPresetJSONTags(t *testing.T) {
 	t.Parallel()
 
-	knownGaps := []string{
-		// Known gap: k3s exposes untagged exported fields that are decoded
-		// from JSON by their Go names but are not documented. PLAN.md
-		// Phase 7 documents them.
-		`kubernetes: go field "Port" missing from swagger`,
-		`kubernetes: go field "UseDynamicPort" missing from swagger`,
-		`kubernetes: go field "K3sServerFlags" missing from swagger`,
-		// Known gap: cockroachdb data loading fields are not documented.
-		// Fix swagger.yaml in PLAN.md Phase 7.
-		`cockroachdb: go field "db" missing from swagger`,
-		`cockroachdb: go field "queries" missing from swagger`,
-		`cockroachdb: go field "queries_files" missing from swagger`,
-		// Known gap: kafka topic_configs is not documented. Fix swagger.yaml
-		// in PLAN.md Phase 7.
-		`kafka: go field "topic_configs" missing from swagger`,
-	}
-
 	doc := loadSwagger(t)
 	mismatches := make([]string, 0, len(swaggerStartPresets))
 
@@ -449,8 +423,7 @@ func TestSwaggerPresetJSONTags(t *testing.T) {
 		mismatches = append(mismatches, compareKeys(name, goKeys, swaggerKeys)...)
 	}
 
-	require.ElementsMatch(t, knownGaps, mismatches,
-		"new mismatch between preset json tags and swagger, or a known gap was fixed: update knownGaps")
+	require.Empty(t, mismatches, "new mismatch between preset json tags and swagger")
 }
 
 func TestSwaggerOptionsJSONTags(t *testing.T) {
@@ -467,17 +440,6 @@ func TestSwaggerOptionsJSONTags(t *testing.T) {
 
 func TestSwaggerResponseJSONTags(t *testing.T) {
 	t.Parallel()
-
-	knownGaps := []string{
-		// Known gap: the response port objects include "host_port" (always 0
-		// in responses), but swagger named-ports doesn't document it. PLAN.md
-		// Phase 7 documents it.
-		`named-ports: go field "host_port" missing from swagger`,
-		// Known gap: start/stop failures may include the "container" object,
-		// but swagger documents only "error". PLAN.md Phase 7 documents it.
-		`start-failed: go field "container" missing from swagger`,
-		`stop-failed: go field "container" missing from swagger`,
-	}
 
 	doc := loadSwagger(t)
 
@@ -523,8 +485,7 @@ func TestSwaggerResponseJSONTags(t *testing.T) {
 		mismatches = append(mismatches, compareKeys(schema, goKeys, propertyNames(doc.resolve(t, s)))...)
 	}
 
-	require.ElementsMatch(t, knownGaps, mismatches,
-		"new mismatch between response types and swagger, or a known gap was fixed: update knownGaps")
+	require.Empty(t, mismatches, "new mismatch between response types and swagger")
 }
 
 func TestSwaggerValueTypeCheck(t *testing.T) {

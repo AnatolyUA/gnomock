@@ -436,6 +436,12 @@ components:
             description: Port number on host machine
             type: integer
             example: 35973
+          host_port:
+            description: >
+              Explicitly requested host port. Presets set it internally (for
+              example kafka's fixed broker port); in responses it is 0.
+            type: integer
+            example: 0
       description: >
         A map of port bindings of a Gnomock container. Human readable names are
         used to make the values readable. `port` value is an actual port
@@ -455,7 +461,11 @@ components:
       properties:
         error:
           type: string
+        container:
+          $ref: '#/components/schemas/container'
       description: >
+        When a container was created before the failure, `container`
+        describes it.
         This error means that Gnomock attempted to start a new container, but
         failed somewhere during the process. It is possible that image took too
         long to download, or there was an issue with container configuration.
@@ -465,7 +475,11 @@ components:
       properties:
         error:
           type: string
+        container:
+          $ref: '#/components/schemas/container'
       description: >
+        When a container was created before the failure, `container`
+        describes it.
         This error means that Gnomock couldn't stop the requested container. It
         is possible that the ID is incorrect, or that there is something wrong
         with docker daemon.
@@ -485,7 +499,7 @@ components:
           type: integer
           format: int64
           description: Wait timeout in nanoseconds
-          default: 300000000000
+          default: 600000000000
           example: 60000000000
         env:
           type: array
@@ -677,7 +691,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '9.0'
       description: >
         This object describes MongoDB container.
 
@@ -727,7 +741,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '2025-latest'
       required:
         - license
       description: >
@@ -780,7 +794,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '9.7'
       description: >
         This object describes MySQL container.
 
@@ -831,7 +845,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '12.3'
       description: >
         This object describes MariaDB container.
 
@@ -885,7 +899,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '18'
       description: >
         This object describes Postgres container.
 
@@ -912,7 +926,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '8.10'
       description: >
         This object describes Redis container.
 
@@ -944,7 +958,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '1.6.45'
       description: >
         This object describes Memcached container.
 
@@ -1008,7 +1022,7 @@ components:
         version:
           type: string
           description: Splunk version.
-          default: latest
+          default: '10.4'
           example: 8.0.2.1
       required:
         - accept_license
@@ -1042,8 +1056,8 @@ components:
         version:
           type: string
           description: RabbitMQ version.
-          default: 3.8.5-alpine
-          example: latest
+          default: '4.4'
+          example: '4.4'
         messages:
           type: array
           description: A list of messages to send to RabbitMQ
@@ -1121,17 +1135,34 @@ components:
           example:
             - alerts
             - events
+        topic_configs:
+          type: array
+          description: >
+            Topics to create with a custom number of partitions. The
+            replication factor is always 1 (single broker). The keys are the
+            Go field names.
+          items:
+            type: object
+            properties:
+              Topic:
+                type: string
+                example: alerts
+              NumPartitions:
+                type: integer
+                example: 3
         version:
           type: string
           description: Kafka version.
-          default: 2.5.1-L0
-          example: latest
+          default: '4.3.1-L0'
+          example: '4.3.1-L0'
         use_schema_registry:
           type: boolean
           description: Set to true to wait for schema registry on startup
           default: false
       description: >
-        This object describes a Kafka container.
+        This object describes a Kafka container. The `zookeeper` port is
+        deprecated and exposed only for Kafka versions below 4; Kafka 4 (the
+        default) runs without ZooKeeper.
 
     elastic-request:
       type: object
@@ -1157,8 +1188,8 @@ components:
         version:
           type: string
           description: Elasticsearch version.
-          default: 8.7.0
-          example: latest
+          default: '9.5.5'
+          example: '9.5.5'
       description: >
         This object describes a Elasticsearch container.
 
@@ -1178,10 +1209,29 @@ components:
         version:
           type: string
           description: >
-            k3s version (see
-            https://hub.docker.com/repository/docker/orlangure/k3s)
-          default: latest
-          example: latest
+            k3s version (see https://hub.docker.com/r/rancher/k3s/tags).
+            Kubernetes 1.35 and newer need a cgroup v2 Docker host.
+          default: 'v1.37.2-k3s1'
+          example: 'v1.37.2-k3s1'
+        Port:
+          type: integer
+          description: >
+            API port for k3s to listen on (Go field name, no JSON tag).
+          default: 48443
+        UseDynamicPort:
+          type: boolean
+          description: >
+            Use a dynamic host port for the API instead of the fixed `Port`
+            (Go field name, no JSON tag).
+          default: false
+        K3sServerFlags:
+          type: array
+          description: >
+            Additional `k3s server` flags (Go field name, no JSON tag).
+          items:
+            type: string
+          example:
+            - --disable=traefik
       description: >
         This object describes a k3s container.
 
@@ -1198,10 +1248,29 @@ components:
     cockroachdb:
       type: object
       properties:
+        db:
+          type: string
+          description: Database to create. Queries run against it.
+          default: mydb
+        queries:
+          type: array
+          description: >
+            A list of queries to execute while setting up the container.
+          items:
+            type: string
+          example:
+            - create table foo(bar int)
+        queries_files:
+          type: array
+          items:
+            type: string
+          description: SQL files to execute while setting up container state.
+          example:
+            - /home/gnomock/project/testdata/cockroachdb/queries.sql
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: 'v26.3.5'
       description: >
         This object describes CockroachDB container.
 
@@ -1221,7 +1290,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '2.9-alpine'
         username:
           type: string
           description: Super-user name
@@ -1261,7 +1330,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '5.0'
       description: >
         This object describes Cassandra container.
 
@@ -1287,7 +1356,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '3.37.0'
       description: >
         This object describes Azurite container.
 
@@ -1323,7 +1392,7 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '2.2'
         policies:
           type: array
           description: Adds additional policies.
