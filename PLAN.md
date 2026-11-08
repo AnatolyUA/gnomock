@@ -447,6 +447,64 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
       `docs/UPGRADE-NOTES.md` (`33e874e`, `786d9dc`).
 - [ ] Delete `PLAN.md`.
 
+### Local run (2026-11-08, macOS 27.2/arm64, kernel 7.2.12-orbstack, Docker 29.8.2)
+
+An independent second check on a developer machine, next to CI and the cloud container.
+OrbStack, cgroup v2, overlayfs, 10 CPUs, 16 GB, 450+ GB free (no pruning needed). Go
+1.27.1, `CI` unset, at `5f3d66f`. No library code changed. `go build ./...` and
+`go vet ./...` pass. Core: root package (`go test -race -v .`), internal packages,
+`cmd/server` and `cmd/cleaner` pass. (`-run 'Internal|Unit'` matches no test in this repo,
+so core was run as in `Taskfile.yml`.) Each preset ran with
+`go test -race -v -timeout 60m ./preset/<name>/... -count=1`, then
+`go test -race -v ./internal/gnomockd -run '^Test<Name>$' -count=1`. The whole
+`./internal/gnomockd` package passed (146.8s, every test PASS, with the uncommitted splunk
+workaround below in place).
+
+| Preset | Preset tests | gnomockd | Notes |
+| --- | --- | --- | --- |
+| memcached | pass | pass | |
+| redis | pass | pass | |
+| postgres | pass | pass | |
+| mysql | pass | pass | |
+| mariadb | pass | pass | |
+| mongo | pass | pass | 7.0, **8.0, 8.3**, 9.0 all ran and passed on kernel 7.2 (see below) |
+| vault | pass | pass | |
+| azurite | pass | pass | |
+| influxdb | pass | pass | |
+| rabbitmq | pass | pass | |
+| cassandra | pass | pass | 4.0/4.1/5.0, ~60s each |
+| cockroachdb | pass | pass | |
+| kafka | pass | pass | 3.9.0-L0, 4.3.1-L0, schema registry |
+| localstack | pass | pass | 2026.10 ran (host has `LOCALSTACK_AUTH_TOKEN`) |
+| elastic | pass | pass | No disk-threshold workaround needed (host 3% full) |
+| splunk | fail → pass | fail → pass | amd64-only image; passes under emulation with a test-only workaround |
+| mssql | pass (flaky 2017) | pass | 2017 passed 2 of 4 runs; 2019/2022/2025 pass (amd64 emulation) |
+| k3s | pass | pass | v1.35.10, v1.36.6, v1.37.2 and defaults; cgroup v2 |
+
+Failures and surprises:
+
+- **splunk (environment, arm64).** First run:
+  `can't pull image: ... no matching manifest for linux/arm64/v8 in the manifest list
+  entries`. The tests always pull, and the Docker Go SDK ignores
+  `DOCKER_DEFAULT_PLATFORM`, so an arm64 host can't run them unchanged. Workaround
+  (uncommitted): `docker pull --platform linux/amd64 splunk/splunk:{10.0,10.2,10.4}`,
+  `gnomock.WithUseLocalImagesFirst()` and `WithTimeout(30*time.Minute)` in
+  `preset/splunk/preset_test.go`, and `use_local_images_first`/`timeout` in
+  `internal/gnomockd/testdata/splunk.json`. With that, 10.0/10.2/10.4 (~95s each under
+  Rosetta), defaults and gnomockd `TestSplunk` pass. Not a library bug; CI runs splunk on
+  amd64.
+- **mssql 2017 (real, known; CI skips it).** `TestPreset/2017-latest` passed in the full
+  run, then failed 2 of 3 solo re-runs with `TLS Handshake failed: tls: failed to parse
+  certificate from server: x509: negative serial number`. The failed run retries until
+  gnomock's 10-minute timeout. This confirms the earlier finding: it depends on the random
+  serial of the certificate 2017 generates at start, so it fails about half the time.
+  Not an emulation effect. Same code decision as above (`docs/UPGRADE-NOTES.md`).
+- **mongo 8.0/8.3 on kernel 7.2 (unexpected pass).** The notes say 8.0/8.3 exit at
+  startup on Linux 6.19+. Here both started and passed in ~10s on OrbStack's 7.2.12
+  kernel. So the trigger is not the kernel version alone; it is probably a kernel config
+  or feature that the CI runner kernels have and OrbStack's doesn't. The CI skip is still
+  needed for the CI runners. Don't read this as the guard being fixed.
+
 ## Behavior changes users will notice
 
 1. **New defaults.** Every preset default moves to a new major version. Anyone not using
