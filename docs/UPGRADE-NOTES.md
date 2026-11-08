@@ -70,6 +70,12 @@ below are the ones that can change behavior or break a build.
   `SECRET`, `KEY`, `AUTH`, `CREDENTIAL` or `ACCOUNTS`, such as
   `POSTGRES_PASSWORD` or `LOCALSTACK_AUTH_TOKEN`). The variable names are
   still logged, and the container still gets the real values.
+- **gnomockd start errors keep bounded logs.** The container logs in a
+  `start-failed` error are capped: a line is truncated after 64 KiB (marked
+  ` [line truncated]`), and when the lines exceed 1 MiB the oldest are dropped
+  (with an `[N earlier log lines dropped]` note). Before, one line over 64 KiB
+  stopped log collection: the request never returned and gnomockd's memory
+  grew without bound.
 - **InfluxDB** supports 2.x only. The floating `latest`/`alpine` tags may point
   to v3, which isn't supported, so pin a 2.x tag.
 - **Architectures.** linux/amd64 and linux/arm64 are tested. mssql and splunk

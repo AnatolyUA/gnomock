@@ -1,10 +1,8 @@
 package gnomockd
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
@@ -57,43 +55,6 @@ func startHandler() http.HandlerFunc {
 			return
 		}
 	}
-}
-
-func setupLogWriter(done chan bool) (io.Writer, chan []string) {
-	logReader, logWriter := io.Pipe()
-	receivedLogLines, allLogs := make(chan string), make(chan []string, 1)
-
-	go func() {
-		defer close(receivedLogLines)
-
-		scanner := bufio.NewScanner(logReader)
-		for scanner.Scan() {
-			receivedLogLines <- scanner.Text()
-		}
-	}()
-
-	go func() {
-		defer func() {
-			close(allLogs)
-
-			_, _ = logReader.Close(), logWriter.Close()
-		}()
-
-		logs := make([]string, 0)
-
-		for {
-			select {
-			case <-done:
-				allLogs <- logs
-
-				return
-			case l := <-receivedLogLines:
-				logs = append(logs, l)
-			}
-		}
-	}()
-
-	return logWriter, allLogs
 }
 
 type startRequest struct {
