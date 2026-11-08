@@ -14,10 +14,9 @@ import (
 
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/registry"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	mongodb "go.mongodb.org/mongo-driver/mongo"
-	mongooptions "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	mongodb "go.mongodb.org/mongo-driver/v2/mongo"
+	mongooptions "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 const defaultVersion = "5.0"
@@ -98,7 +97,7 @@ func (p *P) initf(ctx context.Context, c *gnomock.Container) error {
 
 	clientOptions := mongooptions.Client().ApplyURI(uri)
 
-	client, err := mongodb.Connect(ctx, clientOptions)
+	client, err := mongodb.Connect(clientOptions)
 	if err != nil {
 		return fmt.Errorf("can't create mongo client: %w", err)
 	}
@@ -115,7 +114,7 @@ func (p *P) initf(ctx context.Context, c *gnomock.Container) error {
 			continue
 		}
 
-		err = p.setupDB(client, topLevelDir.Name())
+		err = p.setupDB(ctx, client, topLevelDir.Name())
 		if err != nil {
 			return err
 		}
@@ -128,7 +127,7 @@ func (p *P) useCustomUser() bool {
 	return p.User != "" && p.Password != ""
 }
 
-func (p *P) setupDB(client *mongodb.Client, dirName string) error {
+func (p *P) setupDB(ctx context.Context, client *mongodb.Client, dirName string) error {
 	dataFiles, err := os.ReadDir(path.Join(p.DataPath, dirName))
 	if err != nil {
 		return fmt.Errorf("can't read test data sub path '%s', %w", dirName, err)
@@ -141,7 +140,7 @@ func (p *P) setupDB(client *mongodb.Client, dirName string) error {
 
 		fName := dataFile.Name()
 
-		err = p.setupCollection(client, dirName, fName)
+		err = p.setupCollection(ctx, client, dirName, fName)
 		if err != nil {
 			return fmt.Errorf("can't setup collection from file '%s': %w", fName, err)
 		}
@@ -150,7 +149,7 @@ func (p *P) setupDB(client *mongodb.Client, dirName string) error {
 	return nil
 }
 
-func (p *P) setupCollection(client *mongodb.Client, dirName, dataFileName string) error {
+func (p *P) setupCollection(ctx context.Context, client *mongodb.Client, dirName, dataFileName string) error {
 	collectionName := strings.TrimSuffix(dataFileName, path.Ext(dataFileName))
 
 	file, err := os.Open(path.Join(p.DataPath, dirName, dataFileName)) //nolint:gosec
@@ -158,17 +157,14 @@ func (p *P) setupCollection(client *mongodb.Client, dirName, dataFileName string
 		return fmt.Errorf("can't open file '%s': %w", dataFileName, err)
 	}
 
-	vr, err := bsonrw.NewExtJSONValueReader(file, false)
+	defer func() { _ = file.Close() }()
+
+	vr, err := bson.NewExtJSONValueReader(file, false)
 	if err != nil {
 		return fmt.Errorf("can't read file '%s': %w", dataFileName, err)
 	}
 
-	dec, err := bson.NewDecoder(vr)
-	if err != nil {
-		return fmt.Errorf("can't create BSON decoder for '%s': %w", dataFileName, err)
-	}
-
-	ctx := context.Background()
+	dec := bson.NewDecoder(vr)
 
 	for {
 		var val any
@@ -193,7 +189,7 @@ func healthcheck(ctx context.Context, c *gnomock.Container) error {
 	addr := c.Address(gnomock.DefaultPort)
 	clientOptions := mongooptions.Client().ApplyURI("mongodb://" + addr)
 
-	client, err := mongodb.Connect(ctx, clientOptions)
+	client, err := mongodb.Connect(clientOptions)
 	if err != nil {
 		return fmt.Errorf("can't create mongo client: %w", err)
 	}

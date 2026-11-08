@@ -1,0 +1,2 @@
+{"_id":{"$oid":"5f1b2c3d4e5f6a7b8c9d0e1f"},"at":{"$date":"2020-07-24T10:00:00Z"},"seq":{"$numberLong":"9007199254740993"},"tags":["a","b"],"meta":{"source":"gnomock"}}
+{"_id":{"$oid":"5f1b2c3d4e5f6a7b8c9d0e20"},"at":{"$date":{"$numberLong":"1595584800000"}},"seq":{"$numberLong":"2"},"tags":[],"meta":{"source":"gnomock"}}

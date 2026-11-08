@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/mongo"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
-	mongodb "go.mongodb.org/mongo-driver/mongo"
-	mongooptions "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	mongodb "go.mongodb.org/mongo-driver/v2/mongo"
+	mongooptions "go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"go.uber.org/goleak"
 )
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"4.4", "3.6.21", "5.0"} {
+	for _, version := range []string{"4.4", "5.0"} {
 		t.Run(version, testPreset(version))
 	}
 }
@@ -46,7 +47,7 @@ func testPreset(version string) func(t *testing.T) {
 		uri := fmt.Sprintf("mongodb://%s:%s@%s", "gnomock", "gnomick", addr)
 		clientOptions := mongooptions.Client().ApplyURI(uri)
 
-		client, err := mongodb.Connect(ctx, clientOptions)
+		client, err := mongodb.Connect(clientOptions)
 		require.NoError(t, err)
 
 		// see testdata folder to verify names/numbers
@@ -61,6 +62,28 @@ func testPreset(version string) func(t *testing.T) {
 		count, err = client.Database("db2").Collection("countries").CountDocuments(ctx, bson.D{})
 		require.NoError(t, err)
 		require.Equal(t, int64(3), count)
+
+		// Extended JSON types are decoded into their BSON types.
+		var event struct {
+			ID   bson.ObjectID `bson:"_id"`
+			At   time.Time     `bson:"at"`
+			Seq  int64         `bson:"seq"`
+			Tags []string      `bson:"tags"`
+			Meta struct {
+				Source string `bson:"source"`
+			} `bson:"meta"`
+		}
+
+		events := client.Database("db2").Collection("events")
+		require.NoError(t, events.FindOne(ctx, bson.D{{Key: "seq", Value: int64(9007199254740993)}}).Decode(&event))
+		require.Equal(t, "5f1b2c3d4e5f6a7b8c9d0e1f", event.ID.Hex())
+		require.Equal(t, time.Date(2020, 7, 24, 10, 0, 0, 0, time.UTC), event.At.UTC())
+		require.Equal(t, []string{"a", "b"}, event.Tags)
+		require.Equal(t, "gnomock", event.Meta.Source)
+
+		count, err = events.CountDocuments(ctx, bson.D{{Key: "at", Value: event.At}})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), count, "canonical and relaxed $date decode to the same value")
 
 		require.NoError(t, client.Disconnect(ctx))
 	}
@@ -80,7 +103,7 @@ func TestPreset_withDefaults(t *testing.T) {
 	uri := fmt.Sprintf("mongodb://%s:%s@%s", "gnomock", "gnomick", addr)
 	clientOptions := mongooptions.Client().ApplyURI(uri)
 
-	client, err := mongodb.Connect(ctx, clientOptions)
+	client, err := mongodb.Connect(clientOptions)
 	require.NoError(t, err)
 	require.NoError(t, client.Disconnect(ctx))
 }

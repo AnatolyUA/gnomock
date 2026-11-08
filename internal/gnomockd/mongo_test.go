@@ -14,9 +14,9 @@ import (
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/gnomockd"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
-	mongodb "go.mongodb.org/mongo-driver/mongo"
-	mongooptions "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	mongodb "go.mongodb.org/mongo-driver/v2/mongo"
+	mongooptions "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func TestMongo(t *testing.T) {
@@ -48,7 +48,7 @@ func TestMongo(t *testing.T) {
 	uri := fmt.Sprintf("mongodb://gnomock:foobar@%s", c.DefaultAddress())
 	clientOptions := mongooptions.Client().ApplyURI(uri)
 
-	client, err := mongodb.Connect(ctx, clientOptions)
+	client, err := mongodb.Connect(clientOptions)
 	require.NoError(t, err)
 
 	count, err := client.Database("db").Collection("data").CountDocuments(ctx, bson.D{})
