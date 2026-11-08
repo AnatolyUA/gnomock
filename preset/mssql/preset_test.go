@@ -51,10 +51,8 @@ func testPreset(version string) func(t *testing.T) {
 			gnomock.WithTimeout(time.Minute * 10),
 		}
 
-		if os.Getenv("CI") != "" {
-			options = append(options, gnomock.WithUser("10001:0"))
-		}
-
+		// Keep the image's default user and group: newer images require the
+		// mssql group to write to /var/opt/mssql.
 		container, err := gnomock.Start(p, options...)
 
 		defer func() { _ = gnomock.Stop(container) }()
@@ -88,10 +86,6 @@ func TestPreset_withDefaults(t *testing.T) {
 	p := mssql.Preset(mssql.WithLicense(true))
 	options := []gnomock.Option{
 		gnomock.WithTimeout(time.Minute * 10),
-	}
-
-	if os.Getenv("CI") != "" {
-		options = append(options, gnomock.WithUser("10001:0"))
 	}
 
 	container, err := gnomock.Start(p, options...)

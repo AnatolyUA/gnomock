@@ -358,7 +358,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       auth mounts or policies.
 - [ ] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
       2025, all passing locally. Default driver encryption works with 2022/2025. Package
-      doc: amd64 only. **Red in CI, cause unknown** (see Risks, "mssql 2022/2025 in CI").
+      doc: amd64 only. **CI-only user/group override fixed locally; CI rerun pending**
+      (see Risks, "mssql 2022/2025 in CI").
 - [x] **azurite** (`7dbc018`). Default `3.37.0` (still newest), azblob v1.7.0. New
       `TestPreset_withDefaults`.
 - [x] **splunk** (`d928b09`). Default `10.4`; matrix 10.0, 10.2, 10.4. Splunk 10 exits
@@ -478,18 +479,23 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
   an older kernel. **Decided:** skip in CI (the `kernelGuardedVersions` map in
   `preset/mongo/preset_test.go`); delete the map and the skip once the fixed images
   are published, and consider moving gnomockd `testdata/mongo.json` back to 8.0.
-- **mssql 2022/2025 in CI (open).** On the ubuntu-26.04 runner (kernel 7.0.14 azure),
-  containers that gnomock starts from 2022-latest and 2025-latest exit within ~0.4 s and
-  are auto-removed, so the tests fail with `container network isn't ready: ... No such
-  container` and no logs exist. 2019-latest passes in the same job. Locally (kernel 6.18)
-  all four versions pass. Two temporary CI diagnostic steps (`7318bf6`, `5ad2ff9`, both
-  removed again) showed that a plain `docker run` with the preset's exact env
-  (`ACCEPT_EULA=Y`, `SA_PASSWORD`, the default password) and a published port starts
-  2019, 2022 and 2025 fine on the same runner, so it isn't the image or the kernel alone.
-  Next step: capture the container output in CI, e.g. run the mssql tests with
-  `gnomock.WithDebug(true)` (disables auto-remove) plus `WithLogWriter`, or record
-  `docker events` during the test step. (A middle diagnostic commit, `c18e42f`, broke the
-  workflow file and never ran; `55b6ac9` restored it.)
+- **mssql 2022/2025 in CI (fix awaiting CI verification).** The tests forced
+  `WithUser("10001:0")` only when `CI` was set. Current 2022/2025 images use `mssql`
+  (UID/GID `10001:10001`), and `/var/opt/mssql` is owned by `root:10001` with mode
+  `0770`. Forcing GID 0 removes the group access required to initialize the database.
+  Reproduced locally for both images: `docker run --user 10001:0` exits with code 1,
+  `The system directory [/.system] could not be created` / `Permission denied`;
+  the 2025 image starts and answers `SELECT 1` with its default user. Docker's
+  auto-remove hid this error in CI. Removed both test-only overrides so CI uses the
+  image's default user/group, just like local runs. In run 42451913177,
+  `TestPreset_wrongQueriesFile` already started 2025 successfully because it never
+  applied the override. The temporary diagnostics (`7318bf6`, `5ad2ff9`, both removed)
+  matched the env and published port but omitted `--user`, so they did not reproduce
+  the failing settings. `c18e42f` broke the workflow and never ran; `55b6ac9` restored
+  it. The unchanged workflow now passes local `actionlint`. After the fix,
+  `CI=1 go test -race -v ./preset/mssql/... -count=1` passes locally on OrbStack
+  (amd64 images under emulation): 2019, 2022, 2025, defaults, and wrong-queries-file;
+  2017 retains its existing CI skip. A GitHub runner rerun is still pending.
 - ~~**Kafka 4.x.** Unclear whether port 2181 is actually served.~~ Not served in 4.3.1.
 - ~~**Splunk.** The `SPLUNK_GENERAL_TERMS` requirement is unconfirmed.~~ Confirmed: 10.4
   exits without it.
