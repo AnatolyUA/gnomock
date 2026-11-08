@@ -29,8 +29,19 @@ func TestPreset(t *testing.T) {
 	}
 }
 
+// kernelGuardedVersions refuse to start on Linux 6.19+ kernels, which the CI
+// runners use: "MongoDB cannot start: Linux kernel versions 6.19 and newer has
+// a known incompatibility with this version of MongoDB" (SERVER-121912). The
+// fix (SERVER-131779) is in 8.0.37 and 8.3.16; the newest images on 2026-11-08
+// are 8.0.34 and 8.3.13. Remove the skip once the fixed images are published.
+var kernelGuardedVersions = map[string]bool{"8.0": true, "8.3": true}
+
 func testPreset(version string) func(t *testing.T) {
 	return func(t *testing.T) {
+		if kernelGuardedVersions[version] && os.Getenv("CI") != "" {
+			t.Skipf("mongo %s exits on the CI runners' kernel until 8.0.37/8.3.16 ship", version)
+		}
+
 		p := mongo.Preset(
 			mongo.WithData("./testdata/"),
 			mongo.WithUser("gnomock", "gnomick"),
