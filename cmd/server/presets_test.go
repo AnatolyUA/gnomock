@@ -93,7 +93,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"kubernetes":  "docker.io/rancher/k3s:v1.26.3-k3s1",
 		"localstack":  "docker.io/localstack/localstack:4.14",
 		"mariadb":     "docker.io/library/mariadb:12.3",
-		"memcached":   "docker.io/library/memcached:1.6.9",
+		"memcached":   "docker.io/library/memcached:1.6.45",
 		"mongo":       "docker.io/library/mongo:9.0",
 		"mssql":       "mcr.microsoft.com/mssql/server:2019-latest",
 		"mysql":       "docker.io/library/mysql:9.7",

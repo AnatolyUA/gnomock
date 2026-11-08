@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/memcached:1.6.9"
+		defaultImage = "docker.io/library/memcached:1.6.45"
 		customImage  = "docker.io/library/memcached:1.6.38"
 	)
 

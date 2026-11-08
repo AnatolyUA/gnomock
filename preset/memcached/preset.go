@@ -12,7 +12,7 @@ import (
 	"github.com/orlangure/gnomock/internal/registry"
 )
 
-const defaultVersion = "1.6.9"
+const defaultVersion = "1.6.45"
 
 func init() {
 	registry.Register("memcached", func() gnomock.Preset { return &P{} })
@@ -20,7 +20,7 @@ func init() {
 
 // Preset creates a new Gmomock Memcached preset. This preset includes a Memcached
 // specific healthcheck function, default Memcached image and port, and allows to
-// optionally set up initial state.
+// optionally set up initial state. Default Memcached version is 1.6.45.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
