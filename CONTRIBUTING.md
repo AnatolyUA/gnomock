@@ -44,7 +44,8 @@ you follow existing conventions:
 1. [Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
 
 2. Run [`golangci-lint`](https://github.com/golangci/golangci-lint) on your
-   code using [.golangci.yml](.golangci.yml) file
+   code using [.golangci.yml](.golangci.yml) file. `./...` stops at the nested
+   `cmd/cleaner` module, so run `golangci-lint run ./... ./cmd/cleaner/...`
 
 3. Make sure all existing tests/examples pass, and add/modify tests to cover
    your changes

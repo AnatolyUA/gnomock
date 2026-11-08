@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -43,17 +44,24 @@ func main() {
 		once.Do(func() { connected <- true })
 
 		id := strings.TrimPrefix(r.URL.Path, "/sync/")
-		log.Println("got request to kill", id)
+		log.Println("got request to kill", strconv.Quote(id))
 		<-r.Context().Done()
 
 		if err := gnomock.Stop(&gnomock.Container{
 			ID: id,
 		}); err != nil {
-			log.Fatalf("can't stop container %s: %s\n", id, err.Error())
+			log.Fatalln("can't stop container", strconv.Quote(id)+":", err.Error())
 		}
 
-		log.Println(id, "killed, exiting")
+		log.Println(strconv.Quote(id), "killed, exiting")
 		os.Exit(0)
 	})
-	log.Fatalln(http.ListenAndServe(":8008", nil))
+	// Requests to /sync/ hang until the client disconnects, so there is no
+	// read or write timeout; only the request header must arrive in time.
+	srv := &http.Server{
+		Addr:              ":8008",
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	log.Fatalln(srv.ListenAndServe())
 }

@@ -18,9 +18,10 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15.0
-          args: --timeout=10m
+          # ./... stops at the nested cmd/cleaner module, so list it too.
+          args: --timeout=10m ./... ./cmd/cleaner/...
       - name: Vet for arm64
-        run: GOARCH=arm64 go vet ./...
+        run: GOARCH=arm64 go vet ./... ./cmd/cleaner/...
 
   test-core:
     name: "[core] gnomock, gnomockd (go ${{ matrix.go }})"
