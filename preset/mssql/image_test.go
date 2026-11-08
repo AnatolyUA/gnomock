@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "mcr.microsoft.com/mssql/server:2019-latest"
+		defaultImage = "mcr.microsoft.com/mssql/server:2025-latest"
 		customImage  = "mcr.microsoft.com/mssql/server:2022-latest"
 	)
 

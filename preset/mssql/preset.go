@@ -1,4 +1,7 @@
-// Package mssql provides a Gnomock Preset for Microsoft SQL Server database
+// Package mssql provides a Gnomock Preset for Microsoft SQL Server database.
+//
+// Microsoft publishes SQL Server images for linux/amd64 only, so this preset
+// doesn't work on arm64 hosts.
 package mssql
 
 import (
@@ -17,7 +20,7 @@ const (
 	defaultPassword = "Gn0m!ck~"
 	defaultDatabase = "mydb"
 	defaultPort     = 1433
-	defaultVersion  = "2019-latest"
+	defaultVersion  = "2025-latest"
 )
 
 func init() {
@@ -30,7 +33,7 @@ func init() {
 //
 // When used without any configuration, it uses `mydb` database, and `Gn0m!ck~`
 // administrator password (user: `sa`). You must accept EULA to use this image
-// (`WithLicense` option). By default, version `2019-latest` is used.
+// (`WithLicense` option). By default, version `2025-latest` is used.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
