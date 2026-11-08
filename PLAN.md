@@ -378,20 +378,30 @@ For every row:
 
 ## Phase 7: API docs and generated code
 
-- [ ] **`swagger/swagger.yaml`.** Update the default versions, the LocalStack token
+- [x] **`swagger/swagger.yaml`.** Update the default versions, the LocalStack token
       option, and the Kafka ZooKeeper deprecation. (The new `Options` fields were
-      documented in Phase 4.)
-- [ ] **Swagger gaps found in Phase 1** (allowlisted in `internal/gnomockd/swagger_test.go`):
+      documented in Phase 4.) (`e479973`; also the 10-minute `timeout` default, which
+      said 5 minutes.)
+- [x] **Swagger gaps found in Phase 1** (allowlisted in `internal/gnomockd/swagger_test.go`):
       cockroachdb `db`/`queries`/`queries_files`, kafka `topic_configs`, the untagged k3s
       fields `Port`/`UseDynamicPort`/`K3sServerFlags` (document them under their Go names;
       adding JSON tags would change the wire format), named-port `host_port`, and
       `container` in the start-failed/stop-failed responses. Document them and shrink
-      the allowlist.
-- [ ] **`cmd/generator` and `cmd/server/presets.go`.** Regenerate and confirm that
-      nothing else changes.
-- [ ] **Docs.** Update `README.md` (preset table and versions, supported architectures,
-      Go version), `docs/server.md` and the per-preset readmes.
-- [ ] **Architectures section.** Supported: linux/amd64 and linux/arm64. mssql and splunk
+      the allowlist. (`e479973`: all documented; the swagger tests have no allowlists
+      left and require zero mismatches.)
+- [x] **`cmd/generator` and `cmd/server/presets.go`.** Regenerate and confirm that
+      nothing else changes. (`a726d83`: a dry run with a throwaway preset in a separate
+      worktree found three generator bugs, now fixed: the registry placeholder lost its
+      period (second run inserted nothing) and the import was unsorted; the README row
+      had a stale column; the preset template wasn't gofmt/lint-clean. The registry and
+      swagger tests keep hardcoded preset lists on purpose.)
+- [x] **Docs.** Update `README.md` (preset table and versions, supported architectures,
+      Go version), `docs/server.md` and the per-preset readmes. (`a06a0db`; the
+      redis/mongo/localstack readme examples were run and match their Output.)
+- [x] **Security note in `docs/server.md`** (owner's request, `b3542ad`): no auth, all
+      interfaces, Docker socket, and the newly honored privileged/host_mounts/customImage
+      options; recommends `-p 127.0.0.1:23042:23042`.
+- [x] **Architectures section.** Supported: linux/amd64 and linux/arm64. mssql and splunk
       are amd64 only. 32-bit arm, 386, ppc64le and s390x are not tested.
 
 ## Phase 8: Final verification and cleanup
