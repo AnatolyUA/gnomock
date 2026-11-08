@@ -88,7 +88,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"cassandra":   "docker.io/library/cassandra:5.0",
 		"cockroachdb": "docker.io/cockroachdb/cockroach:v25.1.6",
 		"elastic":     "docker.io/library/elasticsearch:9.5.5",
-		"influxdb":    "docker.io/influxdb:2.7.6-alpine",
+		"influxdb":    "docker.io/influxdb:2.9-alpine",
 		"kafka":       "docker.io/lensesio/fast-data-dev:3.6.1-L0",
 		"kubernetes":  "docker.io/rancher/k3s:v1.26.3-k3s1",
 		"localstack":  "docker.io/localstack/localstack:4.14",

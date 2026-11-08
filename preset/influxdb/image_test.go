@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/influxdb:2.7.6-alpine"
+		defaultImage = "docker.io/influxdb:2.9-alpine"
 		customImage  = "docker.io/influxdb:2.8-alpine"
 	)
 

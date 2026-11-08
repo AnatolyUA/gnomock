@@ -2,8 +2,10 @@
 // interface. This Preset can be passed to gnomock.Start() function to create a
 // configured InfluxDB container to use in tests.
 //
-// Currently this preset only supports InfluxDB 2.x. If you are interested in
-// earlier versions, please consider opening an issue.
+// This preset supports InfluxDB 2.x only; 2.8 and 2.9 are tested. InfluxDB 1.x
+// and 3.x are not supported: they use different setup and APIs. Use a pinned
+// 2.x tag with WithVersion: floating tags such as "alpine" or "latest" may
+// point to InfluxDB 3.
 package influxdb
 
 import (
@@ -17,7 +19,7 @@ import (
 )
 
 const (
-	defaultVersion   = "2.7.6-alpine"
+	defaultVersion   = "2.9-alpine"
 	defaultPort      = 8086
 	defaultUsername  = "gnomock"
 	defaultPassword  = "gnomock-password"
@@ -32,6 +34,7 @@ func init() {
 
 // Preset creates a new Gmomock InfluxDB preset. This preset includes a
 // InfluxDB specific healthcheck function and default InfluxDB image and port.
+// Default InfluxDB version is 2.9-alpine.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

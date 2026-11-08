@@ -19,8 +19,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestPreset(t *testing.T) {
-	for _, version := range []string{"alpine"} {
-		t.Run("version", func(t *testing.T) {
+	for _, version := range []string{"2.8-alpine", "2.9-alpine"} {
+		t.Run(version, func(t *testing.T) {
 			t.Run("with default values", testPreset(version, true))
 			t.Run("with custom values", testPreset(version, false))
 		})
