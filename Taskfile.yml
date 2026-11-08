@@ -16,7 +16,7 @@ tasks:
       GOMAXPROCS: 2
     cmds:
       - go test -race -v ./internal/gnomockd -run TestGnomockd
-      - go test -race -v ./internal/gnomockd -run '^(TestWithOptions|TestStartRequest|TestContainerResponseJSON|TestSwagger)'
+      - go test -race -v ./internal/gnomockd -run '^(TestWithOptions|TestStartRequest|TestContainerResponseJSON|TestSwagger|TestSetupLogWriter)'
 
   test:core:internal:
     env:
