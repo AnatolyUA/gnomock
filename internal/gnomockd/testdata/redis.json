@@ -4,7 +4,7 @@
             "answer": 42,
             "is_good": true
         },
-        "version": "5"
+        "version": "7.4"
     },
     "options": {
         "timeout": 30000000000

@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/redis:6.0.9"
+		defaultImage = "docker.io/library/redis:8.10"
 		customImage  = "docker.io/library/redis:7.2"
 	)
 

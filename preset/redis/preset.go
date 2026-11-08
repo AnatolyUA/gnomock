@@ -12,7 +12,7 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 )
 
-const defaultVersion = "6.0.9"
+const defaultVersion = "8.10"
 
 func init() {
 	registry.Register("redis", func() gnomock.Preset { return &P{} })
@@ -20,7 +20,7 @@ func init() {
 
 // Preset creates a new Gmomock Redis preset. This preset includes a Redis
 // specific healthcheck function, default Redis image and port, and allows to
-// optionally set up initial state.
+// optionally set up initial state. Default Redis version is 8.10.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"5.0.10", "6.0.9", "7.2.4"} {
+	for _, version := range []string{"6.2", "7.2", "7.4", "8.2", "8.10"} {
 		t.Run(version, testPreset(version))
 	}
 }
@@ -63,6 +63,29 @@ func testPreset(version string) func(t *testing.T) {
 
 		require.NoError(t, client.Close())
 	}
+}
+
+func TestPreset_withDefaults(t *testing.T) {
+	t.Parallel()
+
+	p := redis.Preset()
+	container, err := gnomock.Start(p)
+
+	defer func() { require.NoError(t, gnomock.Stop(container)) }()
+
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	client := redisclient.NewClient(&redisclient.Options{Addr: container.DefaultAddress()})
+
+	defer func() { require.NoError(t, client.Close()) }()
+
+	require.NoError(t, client.Set(ctx, "key", "value", 0).Err())
+
+	var str string
+
+	require.NoError(t, client.Get(ctx, "key").Scan(&str))
+	require.Equal(t, "value", str)
 }
 
 func TestRedis_wrongValue(t *testing.T) {
