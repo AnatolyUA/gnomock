@@ -2,8 +2,6 @@ package k3s
 
 import (
 	"strings"
-
-	"golang.org/x/mod/semver"
 )
 
 // Option is an optional configuration of this Gnomock preset. Use available
@@ -20,10 +18,7 @@ func WithVersion(version string) Option {
 				version += "-k3s1"
 			}
 
-			if semver.Compare(version, "v1.17.0") > 0 {
-				// --disable flag only exists in k3s versions above v1.17.0.
-				o.K3sServerFlags = append(o.K3sServerFlags, "--disable=traefik")
-			}
+			o.K3sServerFlags = append(o.K3sServerFlags, "--disable=traefik")
 		}
 
 		o.Version = version

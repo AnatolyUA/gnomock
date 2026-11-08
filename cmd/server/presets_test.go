@@ -90,7 +90,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"elastic":     "docker.io/library/elasticsearch:9.5.5",
 		"influxdb":    "docker.io/influxdb:2.9-alpine",
 		"kafka":       "docker.io/lensesio/fast-data-dev:3.6.1-L0",
-		"kubernetes":  "docker.io/rancher/k3s:v1.26.3-k3s1",
+		"kubernetes":  "docker.io/rancher/k3s:v1.37.2-k3s1",
 		"localstack":  "docker.io/localstack/localstack:4.14",
 		"mariadb":     "docker.io/library/mariadb:12.3",
 		"memcached":   "docker.io/library/memcached:1.6.45",

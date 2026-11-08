@@ -12,12 +12,19 @@
 // > --name k3s-server-1 \
 // > --hostname k3s-server-1 \
 // > -p 6443:6443 \
-// > -d rancher/k3s:v1.24.10-k3s1 \
+// > -d rancher/k3s:v1.37.2-k3s1 \
 // > server
 // > ```
 //
 // Please make sure to pick a version here:
-// https://hub.docker.com/r/rancher/k3s/tags.
+// https://hub.docker.com/r/rancher/k3s/tags. The default is v1.37.2-k3s1;
+// v1.35, v1.36 and v1.37 are tested.
+//
+// Kubernetes 1.35 and newer (including the default version) refuse to run on
+// hosts that use cgroup v1, so this preset needs a cgroup v2 Docker host. On a
+// cgroup v1 host, add "--kubelet-arg=fail-cgroupv1=false" to the
+// K3sServerFlags field of the preset (versions 1.31 and newer accept it), or
+// pick an older version.
 //
 // Keep in mind that k3s runs in a single docker container, meaning it might be
 // limited in memory, CPU and storage. Also remember that this cluster always
@@ -53,7 +60,7 @@ const (
 	// served over.
 	defaultAPIPort = 48443
 	// defaultVersion is the default k3s version to run.
-	defaultVersion = "v1.26.3-k3s1"
+	defaultVersion = "v1.37.2-k3s1"
 )
 
 const (

@@ -1,6 +1,6 @@
 {
     "preset": {
-        "version": "latest"
+        "version": "v1.36.6-k3s1"
     },
     "options": {
     }

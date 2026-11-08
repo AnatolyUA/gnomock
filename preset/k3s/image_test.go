@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/rancher/k3s:v1.26.3-k3s1"
+		defaultImage = "docker.io/rancher/k3s:v1.37.2-k3s1"
 		customImage  = "docker.io/rancher/k3s:v1.30.2-k3s1"
 	)
 
