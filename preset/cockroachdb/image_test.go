@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/cockroachdb/cockroach:v25.1.6"
+		defaultImage = "docker.io/cockroachdb/cockroach:v26.3.5"
 		customImage  = "docker.io/cockroachdb/cockroach:v24.3.5"
 	)
 

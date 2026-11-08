@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultVersion  = "v25.1.6"
+	defaultVersion  = "v26.3.5"
 	defaultPort     = 26257
 	defaultDatabase = "mydb"
 )
@@ -33,6 +33,7 @@ func init() {
 
 // Preset creates a new Gmomock CockroachDB preset. This preset includes a CockroachDB
 // specific healthcheck function and default CockroachDB image and port.
+// Default CockroachDB version is v26.3.5.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

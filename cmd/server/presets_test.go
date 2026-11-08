@@ -86,7 +86,7 @@ func TestPresets_defaultImage(t *testing.T) {
 	tests := map[string]string{
 		"azurite":     "mcr.microsoft.com/azure-storage/azurite:3.34.0",
 		"cassandra":   "docker.io/library/cassandra:5.0",
-		"cockroachdb": "docker.io/cockroachdb/cockroach:v25.1.6",
+		"cockroachdb": "docker.io/cockroachdb/cockroach:v26.3.5",
 		"elastic":     "docker.io/library/elasticsearch:9.5.5",
 		"influxdb":    "docker.io/influxdb:2.9-alpine",
 		"kafka":       "docker.io/lensesio/fast-data-dev:3.6.1-L0",

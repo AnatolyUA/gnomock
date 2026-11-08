@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"v23.2.25", "v24.1.18", "v24.3.13", "v25.1.6"} {
+	for _, version := range []string{"v24.3.37", "v25.2.27", "v25.4.20", "v26.2.11", "v26.3.5"} {
 		t.Run(version, testPreset(version))
 	}
 }

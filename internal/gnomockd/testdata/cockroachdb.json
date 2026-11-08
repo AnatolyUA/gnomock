@@ -9,7 +9,7 @@
             "insert into tbl(a) values (42)"
         ],
         "db": "gnomockd_db",
-        "version": "v25.1.6"
+        "version": "v25.4.20"
     },
     "options": {
     }
