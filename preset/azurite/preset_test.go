@@ -20,16 +20,19 @@ func TestMain(m *testing.M) {
 func TestPreset_Blobstorage(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"latest"} {
-		t.Run(version, testBlobStorage(version))
+	for _, version := range []string{"3.37.0"} {
+		t.Run(version, testBlobStorage(azurite.Preset(azurite.WithVersion(version))))
 	}
 }
 
-func testBlobStorage(version string) func(*testing.T) {
+func TestPreset_withDefaults(t *testing.T) {
+	t.Parallel()
+
+	testBlobStorage(azurite.Preset())(t)
+}
+
+func testBlobStorage(p gnomock.Preset) func(*testing.T) {
 	return func(t *testing.T) {
-		p := azurite.Preset(
-			azurite.WithVersion(version),
-		)
 		c, err := gnomock.Start(p)
 
 		defer func() { require.NoError(t, gnomock.Stop(c)) }()

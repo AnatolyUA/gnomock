@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "mcr.microsoft.com/azure-storage/azurite:3.34.0"
+		defaultImage = "mcr.microsoft.com/azure-storage/azurite:3.37.0"
 		customImage  = "mcr.microsoft.com/azure-storage/azurite:3.33.0"
 	)
 

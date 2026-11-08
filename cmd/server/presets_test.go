@@ -84,7 +84,7 @@ func TestPresets_defaultImage(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]string{
-		"azurite":     "mcr.microsoft.com/azure-storage/azurite:3.34.0",
+		"azurite":     "mcr.microsoft.com/azure-storage/azurite:3.37.0",
 		"cassandra":   "docker.io/library/cassandra:5.0",
 		"cockroachdb": "docker.io/cockroachdb/cockroach:v26.3.5",
 		"elastic":     "docker.io/library/elasticsearch:9.5.5",

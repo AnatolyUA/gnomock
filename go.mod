@@ -3,7 +3,7 @@ module github.com/orlangure/gnomock
 go 1.26.0
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.1
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.7.0
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c
 	github.com/docker/go-connections v0.8.2 // indirect
