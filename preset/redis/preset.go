@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	redisclient "github.com/go-redis/redis/v7"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/registry"
+	redisclient "github.com/redis/go-redis/v9"
 )
 
 const defaultVersion = "6.0.9"
@@ -56,14 +56,14 @@ func (p *P) Options() []gnomock.Option {
 	}
 
 	if p.Values != nil {
-		initf := func(_ context.Context, c *gnomock.Container) error {
+		initf := func(ctx context.Context, c *gnomock.Container) error {
 			addr := c.Address(gnomock.DefaultPort)
 			client := redisclient.NewClient(&redisclient.Options{Addr: addr})
 
 			defer func() { _ = client.Close() }()
 
 			for k, v := range p.Values {
-				err := client.Set(k, v, 0).Err()
+				err := client.Set(ctx, k, v, 0).Err()
 				if err != nil {
 					return fmt.Errorf("can't set '%s'='%v': %w", k, v, err)
 				}
@@ -84,13 +84,13 @@ func (p *P) setDefaults() {
 	}
 }
 
-func healthcheck(_ context.Context, c *gnomock.Container) error {
+func healthcheck(ctx context.Context, c *gnomock.Container) error {
 	addr := c.Address(gnomock.DefaultPort)
 	client := redisclient.NewClient(&redisclient.Options{Addr: addr})
 
 	defer func() { _ = client.Close() }()
 
-	_, err := client.Ping().Result()
+	_, err := client.Ping(ctx).Result()
 
 	return err
 }

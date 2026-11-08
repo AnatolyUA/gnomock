@@ -2,6 +2,7 @@ package gnomockd_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,10 +10,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-redis/redis"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/gnomockd"
 	_ "github.com/orlangure/gnomock/preset/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,16 +42,19 @@ func TestRedis(t *testing.T) {
 	err = json.Unmarshal(body, &c)
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	client := redis.NewClient(&redis.Options{Addr: c.DefaultAddress()})
+
+	defer func() { require.NoError(t, client.Close()) }()
 
 	answer := 0
 
-	require.NoError(t, client.Get("answer").Scan(&answer))
+	require.NoError(t, client.Get(ctx, "answer").Scan(&answer))
 	require.Equal(t, 42, answer)
 
 	var isGood bool
 
-	require.NoError(t, client.Get("is_good").Scan(&isGood))
+	require.NoError(t, client.Get(ctx, "is_good").Scan(&isGood))
 	require.True(t, isGood)
 
 	bs, err = json.Marshal(c)

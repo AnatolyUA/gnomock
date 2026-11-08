@@ -1,11 +1,12 @@
 package redis_test
 
 import (
+	"context"
 	"testing"
 
-	redisclient "github.com/go-redis/redis/v7"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/redis"
+	redisclient "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 
 	"go.uber.org/goleak"
@@ -41,22 +42,23 @@ func testPreset(version string) func(t *testing.T) {
 
 		require.NoError(t, err)
 
+		ctx := context.Background()
 		addr := container.DefaultAddress()
 		client := redisclient.NewClient(&redisclient.Options{Addr: addr})
 
 		var str string
 
-		require.NoError(t, client.Get("a").Scan(&str))
+		require.NoError(t, client.Get(ctx, "a").Scan(&str))
 		require.Equal(t, "foo", str)
 
 		var number int
 
-		require.NoError(t, client.Get("b").Scan(&number))
+		require.NoError(t, client.Get(ctx, "b").Scan(&number))
 		require.Equal(t, 42, number)
 
 		var flag bool
 
-		require.NoError(t, client.Get("c").Scan(&flag))
+		require.NoError(t, client.Get(ctx, "c").Scan(&flag))
 		require.True(t, flag)
 
 		require.NoError(t, client.Close())
