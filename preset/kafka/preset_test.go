@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPreset(t *testing.T) {
-	versions := []string{"3.3.1-L0", "3.6.1-L0"}
+	versions := []string{"3.9.0-L0", "4.3.1-L0"}
 
 	for _, version := range versions {
 		t.Run(version, testPreset(version))

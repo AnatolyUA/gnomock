@@ -13,6 +13,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/orlangure/gnomock"
@@ -22,14 +24,19 @@ import (
 
 // The following ports are exposed by this preset:.
 const (
-	BrokerPort         = "broker"
-	ZooKeeperPort      = "zookeeper"
+	BrokerPort = "broker"
+
+	// Deprecated: ZooKeeperPort is exposed only for Kafka versions below 4.
+	// Kafka 4 runs without ZooKeeper (KRaft mode), and the default version
+	// is 4.x.
+	ZooKeeperPort = "zookeeper"
+
 	WebPort            = "web"
 	SchemaRegistryPort = "registry"
 )
 
 const (
-	defaultVersion     = "3.6.1-L0"
+	defaultVersion     = "4.3.1-L0"
 	brokerPort         = 49092
 	zookeeperPort      = 2181
 	webPort            = 3030
@@ -56,7 +63,8 @@ func init() {
 // is available when using this preset.
 //
 // By default, this preset uses `lensesio/fast-data-dev` docker image with
-// version `2.5.1-L0` (version can be changed using `WithVersion`).
+// version `4.3.1-L0` (version can be changed using `WithVersion`). Kafka 3.9
+// and 4.3 are tested.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
@@ -96,7 +104,10 @@ func (p *P) Ports() gnomock.NamedPorts {
 	bp.HostPort = brokerPort
 	namedPorts[BrokerPort] = bp
 
-	namedPorts[ZooKeeperPort] = gnomock.TCP(zookeeperPort)
+	if p.hasZooKeeper() {
+		namedPorts[ZooKeeperPort] = gnomock.TCP(zookeeperPort)
+	}
+
 	namedPorts[WebPort] = gnomock.TCP(webPort)
 	namedPorts[SchemaRegistryPort] = gnomock.TCP(schemaRegistryPort)
 
@@ -191,6 +202,22 @@ func (p *P) healthcheckRegistry(ctx context.Context, c *gnomock.Container) error
 	}
 
 	return nil
+}
+
+// hasZooKeeper reports whether the configured Kafka version runs ZooKeeper:
+// versions below 4 do. Versions that don't start with a major number, such
+// as "latest", are treated as 4 or newer.
+func (p *P) hasZooKeeper() bool {
+	version := p.Version
+	if version == "" {
+		version = defaultVersion
+	}
+
+	major, _, _ := strings.Cut(version, ".")
+
+	n, err := strconv.Atoi(major)
+
+	return err == nil && n < 4
 }
 
 func (p *P) setDefaults() {

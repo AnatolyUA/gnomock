@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/lensesio/fast-data-dev:3.6.1-L0"
+		defaultImage = "docker.io/lensesio/fast-data-dev:4.3.1-L0"
 		customImage  = "docker.io/lensesio/fast-data-dev:3.9.0-L0"
 	)
 
@@ -77,5 +77,39 @@ func decodeKafkaPreset(body string) func(t *testing.T) gnomock.Preset {
 		require.NoError(t, json.Unmarshal([]byte(body), p))
 
 		return p
+	}
+}
+
+// TestPreset_ZooKeeperPort pins that the ZooKeeper port is exposed only for
+// Kafka versions below 4: Kafka 4 has no ZooKeeper.
+func TestPreset_ZooKeeperPort(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		version string
+		want    bool
+	}{
+		{version: "", want: false},
+		{version: "4.3.1-L0", want: false},
+		{version: "4.0.2", want: false},
+		{version: "latest", want: false},
+		{version: "3.9.0-L0", want: true},
+		{version: "3.6.1", want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run("version="+tt.version, func(t *testing.T) {
+			t.Parallel()
+
+			p := kafka.Preset(kafka.WithVersion(tt.version))
+			_ = p.Options()
+
+			ports := p.Ports()
+			_, ok := ports[kafka.ZooKeeperPort] //nolint:staticcheck // the deprecated port is under test
+			require.Equal(t, tt.want, ok)
+			require.Contains(t, ports, kafka.BrokerPort)
+			require.Contains(t, ports, kafka.WebPort)
+			require.Contains(t, ports, kafka.SchemaRegistryPort)
+		})
 	}
 }
