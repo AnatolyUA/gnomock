@@ -7,7 +7,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c
 	github.com/docker/go-connections v0.8.2 // indirect
-	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.19.7
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang/snappy v1.0.0 // indirect
