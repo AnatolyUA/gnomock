@@ -324,9 +324,10 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       (13.1 is rc). No `mysql*` binaries are used; `MYSQL_*` env aliases still work.
 - [x] **redis** (`ba55013`). Default `8.10`; matrix 6.2, 7.2, 7.4, 8.2, 8.10. New
       `TestPreset_withDefaults`.
-- [ ] **mongo** (`5ca7ce9`). Default `9.0`; matrix 7.0, 8.0, 8.3, 9.0. Passes locally
-      (kernel 6.18). **Red in CI, blocked on the owner's decision** (see Risks, "MongoDB
-      kernel guard"): 8.0 and 8.3 exit at startup on both runner images.
+- [x] **mongo** (`5ca7ce9`). Default `9.0`; matrix 7.0, 8.0, 8.3, 9.0. Passes locally
+      (kernel 6.18). 8.0 and 8.3 exit at startup on both CI runner images (see Risks,
+      "MongoDB kernel guard"). **Owner's decision:** skip them in CI until the fixed
+      images ship (`66e3b95`); gnomockd testdata asks for 7.0.
 - [x] **memcached** (`6a1b6b6`). Default and matrix `1.6.45` (exact).
 - [x] **rabbitmq** (`4a5a199`). Default `4.4`; matrix 4.3-alpine, 4.4-alpine,
       4.4-management-alpine. RabbitMQ 4.3+ refuses transient non-exclusive queues by
@@ -463,7 +464,8 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
 
 ## Risks and open verification items
 
-- **MongoDB kernel guard (open, needs the owner's decision).** MongoDB 8.x refuses to
+- **MongoDB kernel guard (CI skip in place; remove it when 8.0.37 and 8.3.16 are on
+  Docker Hub).** MongoDB 8.x refuses to
   start on Linux kernels 6.19+ unless the build exempts the kernel (SERVER-121912,
   SERVER-125742, SERVER-131779): `MongoDB cannot start: Linux kernel versions 6.19 and
   newer has a known incompatibility with this version of MongoDB`. Both CI runner
@@ -473,7 +475,9 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
   container exits after its network is up, so the healthcheck spins until the 10-minute
   default timeout and the job times out. Options: drop 8.0/8.3 from the matrix for now,
   skip them in CI until the fixed images ship, or run the mongo jobs on a runner with
-  an older kernel.
+  an older kernel. **Decided:** skip in CI (the `kernelGuardedVersions` map in
+  `preset/mongo/preset_test.go`); delete the map and the skip once the fixed images
+  are published, and consider moving gnomockd `testdata/mongo.json` back to 8.0.
 - **mssql 2022/2025 in CI (open).** On the ubuntu-26.04 runner (kernel 7.0.14 azure),
   containers that gnomock starts from 2022-latest and 2025-latest exit within ~0.4 s and
   are auto-removed, so the tests fail with `container network isn't ready: ... No such
