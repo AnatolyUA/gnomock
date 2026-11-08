@@ -201,24 +201,54 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 
 ## Phase 4: Bug fixes found during research
 
-- [ ] **`WithOptions` (`options.go:114`).** Copy every serializable field:
+- [x] **`WithOptions` (`options.go:114`).** Copy every serializable field:
       `Privileged`, `Cmd`, `Entrypoint`, `DisableAutoCleanup`, `UseLocalImagesFirst`,
       `Auth`, `HostMounts`, `ExtraHosts`, `Reuse`, `CustomImage`, `User`. Then flip the
       Phase 1 golden test, and add the missing fields to `swagger.yaml`.
-- [ ] **`pullImage` (`docker.go:101`).** Decode the JSON message stream and surface
-      `{"error": ...}` entries instead of discarding them.
-- [ ] **Error matching.** Replace daemon error-string matching with `cerrdefs`
+  - Merge semantics (implementation default): the 11 new fields apply only when set,
+    so an empty `Options` doesn't undo options applied earlier. Bools are OR-ed,
+    `HostMounts` entries are added (like `WithHostMounts`), and non-empty
+    `Cmd`/`Entrypoint`/`ExtraHosts` and non-empty strings replace. The five old fields
+    keep their semantics (`Debug`/`ContainerName` still always overwrite), as pinned by
+    `TestWithOptionsMerge`; the new semantics are in `TestWithOptionsMergeSetFields`.
+  - The golden test now asserts every field is copied. Swagger documents `entrypoint`,
+    `host_mounts`, `extraHosts`, `reuse`, `customImage` and `user`, and the options
+    allowlist in `TestSwaggerOptionsJSONTags` is gone. Verified end to end: a gnomockd
+    `/start/memcached` request with `privileged`, `user`, `extraHosts`, `host_mounts`
+    and `disable_cleanup` produced a container with all five applied.
+- [x] **`pullImage` (`docker.go:101`).** Decode the JSON message stream and surface
+      `{"error": ...}` entries instead of discarding them. Uses
+      `ImagePullResponse.Wait`, which also types the error by its code (cerrdefs).
+      `pull_internal_test.go` runs `pullImage` against a fake daemon (`httptest`); four
+      of its cases fail on the old code.
+- [x] **Error matching.** Replace daemon error-string matching with `cerrdefs`
       (`IsConflict` and friends) where the API supports it. Keep the Phase 1 tests.
       Expected flips: the "Current behavior" cases in `TestIsDeletionAlreadyInProgessError`
       (`docker_internal_test.go`) that return false for a missing client prefix or an
       extra wrap.
-- [ ] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`;
+  - Both cases are 409 conflicts (checked against the local daemon for the duplicate
+    name). Duplicate name: `duplicateContainerID` requires `IsConflict`, the regexp
+    still extracts the ID, and an unrecognized conflict message falls back to removing
+    by container name (within the `WithContainerName` contract). Removal in progress:
+    the API has no specific type, so it is `IsConflict` plus a `strings.Contains` on
+    the message.
+  - The Phase 1 cases are all kept. Their errors are now wrapped in a conflict type, as
+    moby/client returns them, and the two predicted flips happened. New cases: the same
+    message without the conflict type is rejected, and `TestDuplicateContainerID`.
+  - Not changed: `preset/postgres` matches the `pq` "database already exists" message.
+    It is a driver error, not a daemon error, so it is outside this item.
+- [x] **MySQL driver logger race** (found by the Phase 1 registry test under `-race`;
       fix approved by the owner).
       `preset/mysql/preset.go:72-74` and `preset/mariadb/preset.go:70-72` each call
       `mysqldriver.SetLogger` inside their own `sync.Once`. Concurrent `Options()` calls
       on both presets (gnomockd serving `/start/mysql` and `/start/mariadb` at once)
       race on the driver's global logger. Use one shared once, then restore
       `t.Parallel()` in the `TestPresets_defaultImage` subtests (`cmd/server/presets_test.go`).
+  - New package `internal/mysqllog` (`Discard()`), added to `task test:core:internal`.
+    The restored parallel test caught the race on the old code in 2 of 5 runs.
+- [x] **Phase gate (local, amd64):** `go build`, `go vet` (amd64 and arm64),
+      golangci-lint v2.15.0 (0 issues), the root package with `-race`, all
+      `test:core:*` suites, and the mysql/mariadb presets plus their gnomockd tests.
 
 ## Phase 5: Major driver upgrades (internal only, no public API change)
 
@@ -266,8 +296,9 @@ For every row:
 
 ## Phase 7: API docs and generated code
 
-- [ ] **`swagger/swagger.yaml`.** Update the default versions, the new `Options` fields
-      (Phase 4), the LocalStack token option, and the Kafka ZooKeeper deprecation.
+- [ ] **`swagger/swagger.yaml`.** Update the default versions, the LocalStack token
+      option, and the Kafka ZooKeeper deprecation. (The new `Options` fields were
+      documented in Phase 4.)
 - [ ] **Swagger gaps found in Phase 1** (allowlisted in `internal/gnomockd/swagger_test.go`):
       cockroachdb `db`/`queries`/`queries_files`, kafka `topic_configs`, the untagged k3s
       fields `Port`/`UseDynamicPort`/`K3sServerFlags` (document them under their Go names;
@@ -300,7 +331,9 @@ For every row:
 4. **Kafka.** `ZooKeeperPort` is deprecated, and with Kafka 4.x there is no ZooKeeper.
 5. **LocalStack.** The default 4.14 is a frozen image. 2026.x needs an auth token.
 6. **gnomockd / `WithOptions`.** These now honor `privileged`, `cmd`, `auth` and the other
-   fields that used to be silently ignored.
+   fields that used to be silently ignored. Go callers that pass a populated `Options`
+   to `WithOptions` get those fields applied too. Unset fields don't override options
+   applied earlier.
 7. **Old servers.** The Mongo driver needs server 4.2 or newer, and EOL server versions are
    no longer tested.
 8. **Init and healthcheck honor the start timeout.** The SQL presets (postgres, mysql,
@@ -315,6 +348,9 @@ For every row:
    `/start/%2e%2e`) now reaches the handler and gets the JSON "preset not found" 404,
    where mux gave a plain-text 404 or a redirect. 405 responses now carry
    `Content-Type: text/plain`.
+10. **Pull failures fail at pull time.** An unknown tag or a denied pull now fails with
+    `can't pull image: ...` and the daemon's message, instead of a later
+    `can't create container: ... No such image`.
 
 ## Risks and open verification items
 
