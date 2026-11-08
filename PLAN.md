@@ -413,11 +413,38 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
 
 ## Phase 8: Final verification and cleanup
 
-- [ ] Run the full local integration suite with every preset.
-- [ ] Get CI green on the branch: lint, core, presets, arm64, image builds.
-- [ ] Re-run the dependency check (`go list -m -u`) and the image-tag check, in case
-      anything was released during the work.
-- [ ] Write a "breaking changes" summary (below) into the final report or PR description.
+- [x] Run the full local integration suite with every preset. Done 2026-11-08 on kernel
+      6.18.44 (cgroup v1), `CI` unset, one preset at a time, images pruned between
+      presets. Core (root, gnomockd, internal, `cmd/server`, `cmd/cleaner`), build and
+      `go vet` (amd64 and arm64) pass. Preset + gnomockd pass for 17 of 18:
+      memcached, redis, postgres, mysql, mariadb, mongo (8.0/8.3 too, below 6.19),
+      vault, azurite, influxdb, rabbitmq, cassandra, cockroachdb, kafka, localstack
+      (2026.10 skipped, no token), elastic (only with the disk-threshold workaround,
+      uncommitted), splunk (10.4 only after a re-run with free disk: Splunk needs
+      5000 MB free) and mssql 2019/2022/2025. Failures:
+  - **k3s:** every container test times out (kubeconfig never served), as expected
+    on this cgroup v1 host. CI is the authority.
+  - **mssql 2017 (new finding):** `x509: negative serial number`. SQL Server 2017's
+    self-signed certificate often has a negative serial, which Go 1.23+ rejects now that
+    `go.mod` says 1.26. Alone: 0 of 3 passed without GODEBUG, 3 of 3 passed with
+    `GODEBUG=x509negativeserial=1`. Skipped in CI, so CI can't see it. Documented in
+    `docs/UPGRADE-NOTES.md` (`786d9dc`); the code fix is the owner's decision.
+  - **mssql 2025 (once):** in the first full run, `TestPreset_withDefaults` got
+    "connection refused" after its container died. It passed on the re-run. Not
+    reproduced; it happened with six SQL Server containers starting in parallel.
+- [x] Get CI green on the branch: lint, core, presets, arm64, image builds. Run
+      42456205256 (`862e6f2`): 26 of 26 jobs green. Run 42462050288 (`786d9dc`) green.
+      Mongo 8.0/8.3 are still skipped in CI (see Risks). CodeQL never runs on the fork
+      (`disabled_fork`).
+- [x] Re-run the dependency check (`go list -m -u`) and the image-tag check, in case
+      anything was released during the work. 2026-11-08: the only direct-dependency
+      update (root, workspace or `GOWORK=off`) is azblob v1.8.3, still held because
+      Azurite 3.37.0 is the newest. `cmd/cleaner`: none. Images: every default and matrix
+      tag is the newest of its line; Mongo is still at 8.0.34/8.3.13. Newer, not adopted:
+      **splunk 10.6.1** (since 2026-10-01; no floating `10.6` tag), awaiting the owner.
+      No tag changes.
+- [x] Write a "breaking changes" summary (below) into the final report or PR description.
+      `docs/UPGRADE-NOTES.md` (`33e874e`, `786d9dc`).
 - [ ] Delete `PLAN.md`.
 
 ## Behavior changes users will notice
