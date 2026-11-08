@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"10.15", "11.10", "12.5", "13.1", "14.11", "15.6", "16.2"} {
+	for _, version := range []string{"15", "16", "17", "18"} {
 		t.Run(version, testPreset(version))
 	}
 }

@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/postgres:16.2"
+		defaultImage = "docker.io/library/postgres:18"
 		customImage  = "docker.io/library/postgres:17.4"
 	)
 

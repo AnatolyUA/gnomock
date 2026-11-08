@@ -11,7 +11,7 @@
         "user": "gnomock",
         "password": "foobar",
         "db": "gnomockd_db",
-        "version": "12"
+        "version": "17"
     },
     "options": {
     }

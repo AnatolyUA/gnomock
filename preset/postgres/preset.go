@@ -19,7 +19,7 @@ const (
 	defaultDatabase = "postgres"
 	defaultSSLMode  = "disable"
 	defaultPort     = 5432
-	defaultVersion  = "16.2"
+	defaultVersion  = "18"
 )
 
 func init() {
@@ -31,7 +31,7 @@ func init() {
 // optionally set up initial state.
 //
 // By default, this preset uses `postgres` user with `password` password, with
-// default database `postgres`. Default PostgresQL version is 12.5.
+// default database `postgres`. Default PostgreSQL version is 18.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
@@ -79,7 +79,6 @@ func (p *P) Options() []gnomock.Option {
 	opts := []gnomock.Option{
 		gnomock.WithHealthCheck(p.healthcheck),
 		gnomock.WithEnv("POSTGRES_PASSWORD=" + defaultPassword),
-		gnomock.WithEnv("TZ=" + p.Timezone),
 		gnomock.WithInit(p.initf()),
 	}
 
