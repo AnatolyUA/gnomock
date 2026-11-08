@@ -17,28 +17,27 @@ import (
 
 const goldenStartRequest = "testdata/golden/start_request_all_options.json"
 
-// withOptionsCopied lists every exported gnomock.Options field and whether
-// WithOptions copies it today. A new exported field fails the tests below
-// until it is added here.
-var withOptionsCopied = map[string]bool{
-	"Timeout":          true,
-	"Env":              true,
-	"Debug":            true,
-	"ContainerName":    true,
-	"CustomNamedPorts": true,
-
-	// Current behavior: dropped by WithOptions. PLAN.md Phase 4 flips this.
-	"Privileged":          false,
-	"Cmd":                 false,
-	"Entrypoint":          false,
-	"HostMounts":          false,
-	"DisableAutoCleanup":  false,
-	"UseLocalImagesFirst": false,
-	"Auth":                false,
-	"ExtraHosts":          false,
-	"Reuse":               false,
-	"CustomImage":         false,
-	"User":                false,
+// withOptionsFields lists every exported gnomock.Options field. A new
+// exported field fails the tests below until it is added here, to
+// goldenOptions and to the golden start request, so that WithOptions can't
+// silently drop it.
+var withOptionsFields = []string{
+	"Timeout",
+	"Env",
+	"Debug",
+	"Privileged",
+	"ContainerName",
+	"Cmd",
+	"Entrypoint",
+	"HostMounts",
+	"DisableAutoCleanup",
+	"UseLocalImagesFirst",
+	"CustomNamedPorts",
+	"Auth",
+	"ExtraHosts",
+	"Reuse",
+	"CustomImage",
+	"User",
 }
 
 // goldenOptions is what the golden start request decodes into.
@@ -96,18 +95,13 @@ func exportedOptionsFields() []reflect.StructField {
 func TestWithOptionsFieldListIsExhaustive(t *testing.T) {
 	t.Parallel()
 
-	names := make([]string, 0, len(withOptionsCopied))
+	names := make([]string, 0, len(withOptionsFields))
 	for _, f := range exportedOptionsFields() {
 		names = append(names, f.Name)
 	}
 
-	known := make([]string, 0, len(withOptionsCopied))
-	for name := range withOptionsCopied {
-		known = append(known, name)
-	}
-
-	require.ElementsMatch(t, known, names,
-		"gnomock.Options exported fields changed: update withOptionsCopied, goldenOptions and the golden start request")
+	require.ElementsMatch(t, withOptionsFields, names,
+		"gnomock.Options exported fields changed: update withOptionsFields, goldenOptions and the golden start request")
 }
 
 func TestStartRequestGoldenOptions(t *testing.T) {
@@ -169,32 +163,14 @@ func TestStartRequestGoldenOptions(t *testing.T) {
 		got := &gnomock.Options{}
 		gnomock.WithOptions(&sr.Options)(got)
 
+		// Every field reaches the options gnomock.Start uses.
 		src, dst := reflect.ValueOf(sr.Options), reflect.ValueOf(*got)
 
 		for _, f := range exportedOptionsFields() {
-			copied, ok := withOptionsCopied[f.Name]
-			require.True(t, ok, "unknown Options field %s", f.Name)
-
-			srcField, dstField := src.FieldByIndex(f.Index), dst.FieldByIndex(f.Index)
-
-			if copied {
-				require.Equal(t, srcField.Interface(), dstField.Interface(), f.Name)
-				continue
-			}
-
-			// Current behavior: dropped by WithOptions. PLAN.md Phase 4 flips this.
-			require.True(t, dstField.IsZero(), "%s is expected to be dropped by WithOptions today", f.Name)
+			require.Equal(t, src.FieldByIndex(f.Index).Interface(), dst.FieldByIndex(f.Index).Interface(), f.Name)
 		}
 
-		require.Equal(t, gnomock.Options{
-			Timeout:       60 * time.Second,
-			Env:           []string{"FOO=foo", "BAR=bar"},
-			Debug:         true,
-			ContainerName: "gnomock-golden",
-			CustomNamedPorts: gnomock.NamedPorts{
-				"default": {Protocol: "tcp", Port: 5432, HostPort: 15432},
-			},
-		}, *got)
+		require.Equal(t, goldenOptions(), *got)
 	})
 }
 
@@ -343,6 +319,120 @@ func TestWithOptionsMerge(t *testing.T) {
 			require.Equal(t, tt.want, *got)
 		})
 	}
+}
+
+// TestWithOptionsMergeSetFields covers the fields that WithOptions applies
+// only when they are set, on top of options applied earlier.
+func TestWithOptionsMergeSetFields(t *testing.T) {
+	t.Parallel()
+
+	existing := func() *gnomock.Options {
+		return &gnomock.Options{
+			Privileged:          true,
+			Cmd:                 []string{"old-cmd"},
+			Entrypoint:          []string{"old-entrypoint"},
+			HostMounts:          map[string]string{"/old": "/old", "/shared": "/old-shared"},
+			DisableAutoCleanup:  true,
+			UseLocalImagesFirst: true,
+			Auth:                "old-auth",
+			ExtraHosts:          []string{"old.local:127.0.0.1"},
+			Reuse:               true,
+			CustomImage:         "old/image:1",
+			User:                "1:1",
+		}
+	}
+
+	tests := []struct {
+		name     string
+		existing *gnomock.Options
+		in       gnomock.Options
+		want     gnomock.Options
+	}{
+		{
+			name:     "zero values don't override",
+			existing: existing(),
+			in:       gnomock.Options{},
+			want:     *existing(),
+		},
+		{
+			name:     "set values override, host mounts are merged",
+			existing: existing(),
+			in: gnomock.Options{
+				Cmd:         []string{"new-cmd", "arg"},
+				Entrypoint:  []string{"new-entrypoint"},
+				HostMounts:  map[string]string{"/new": "/new", "/shared": "/new-shared"},
+				Auth:        "new-auth",
+				ExtraHosts:  []string{"new.local:127.0.0.1"},
+				CustomImage: "new/image:2",
+				User:        "2:2",
+			},
+			want: gnomock.Options{
+				Privileged:          true,
+				Cmd:                 []string{"new-cmd", "arg"},
+				Entrypoint:          []string{"new-entrypoint"},
+				HostMounts:          map[string]string{"/old": "/old", "/new": "/new", "/shared": "/new-shared"},
+				DisableAutoCleanup:  true,
+				UseLocalImagesFirst: true,
+				Auth:                "new-auth",
+				ExtraHosts:          []string{"new.local:127.0.0.1"},
+				Reuse:               true,
+				CustomImage:         "new/image:2",
+				User:                "2:2",
+			},
+		},
+		{
+			name:     "set values apply to empty options",
+			existing: &gnomock.Options{},
+			in: gnomock.Options{
+				Privileged:          true,
+				HostMounts:          map[string]string{"/src": "/dst"},
+				DisableAutoCleanup:  true,
+				UseLocalImagesFirst: true,
+				Reuse:               true,
+			},
+			want: gnomock.Options{
+				Privileged:          true,
+				HostMounts:          map[string]string{"/src": "/dst"},
+				DisableAutoCleanup:  true,
+				UseLocalImagesFirst: true,
+				Reuse:               true,
+			},
+		},
+		{
+			name:     "empty slices and maps don't override",
+			existing: existing(),
+			in: gnomock.Options{
+				Cmd:        []string{},
+				Entrypoint: []string{},
+				HostMounts: map[string]string{},
+				ExtraHosts: []string{},
+			},
+			want: *existing(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			in := tt.in
+			gnomock.WithOptions(&in)(tt.existing)
+
+			require.Equal(t, tt.want, *tt.existing)
+		})
+	}
+
+	t.Run("source host mounts are not aliased", func(t *testing.T) {
+		t.Parallel()
+
+		src := &gnomock.Options{HostMounts: map[string]string{"/src": "/dst"}}
+		dst := &gnomock.Options{}
+		gnomock.WithOptions(src)(dst)
+
+		dst.HostMounts["/other"] = "/other"
+
+		require.Equal(t, map[string]string{"/src": "/dst"}, src.HostMounts)
+	})
 }
 
 func TestContainerResponseJSON(t *testing.T) {

@@ -109,6 +109,12 @@ func WithPrivileged() Option {
 // WithOptions allows to provide an existing set of Options instead of using
 // optional configuration.
 //
+// Every exported field is applied. Env entries are appended and HostMounts
+// entries are added to the existing ones. Debug and ContainerName always
+// replace the existing values. Every other field replaces the existing value
+// only when it is set (non-zero), so an empty Options doesn't undo options
+// applied earlier.
+//
 // This way has its own limitations. For example, context or initialization
 // functions cannot be set in this way.
 func WithOptions(options *Options) Option {
@@ -124,6 +130,49 @@ func WithOptions(options *Options) Option {
 		o.Env = append(o.Env, options.Env...)
 		o.Debug = options.Debug
 		o.ContainerName = options.ContainerName
+
+		applySetOptions(o, options)
+	}
+}
+
+// applySetOptions copies the fields of src that WithOptions applies only when
+// they are set.
+func applySetOptions(dst, src *Options) {
+	dst.Privileged = dst.Privileged || src.Privileged
+	dst.DisableAutoCleanup = dst.DisableAutoCleanup || src.DisableAutoCleanup
+	dst.UseLocalImagesFirst = dst.UseLocalImagesFirst || src.UseLocalImagesFirst
+	dst.Reuse = dst.Reuse || src.Reuse
+
+	if len(src.Cmd) > 0 {
+		dst.Cmd = src.Cmd
+	}
+
+	if len(src.Entrypoint) > 0 {
+		dst.Entrypoint = src.Entrypoint
+	}
+
+	if len(src.ExtraHosts) > 0 {
+		dst.ExtraHosts = src.ExtraHosts
+	}
+
+	for hostPath, containerPath := range src.HostMounts {
+		if dst.HostMounts == nil {
+			dst.HostMounts = make(map[string]string, len(src.HostMounts))
+		}
+
+		dst.HostMounts[hostPath] = containerPath
+	}
+
+	if src.Auth != "" {
+		dst.Auth = src.Auth
+	}
+
+	if src.CustomImage != "" {
+		dst.CustomImage = src.CustomImage
+	}
+
+	if src.User != "" {
+		dst.User = src.User
 	}
 }
 

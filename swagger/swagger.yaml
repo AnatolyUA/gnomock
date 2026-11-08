@@ -528,6 +528,48 @@ components:
             Hub, if 2FA authentication is enabled, an access token should be
             used instead of a password.
           example: eyJ1c2VybmFtZSI6ImZvbyIsInBhc3N3b3JkIjoiYmFyIn0K
+        entrypoint:
+          type: array
+          description: >
+            Overrides the image entrypoint. `cmd` is passed to it as
+            arguments.
+          items:
+            type: string
+        host_mounts:
+          type: object
+          description: >
+            Host paths to bind-mount into the container. Keys are host paths,
+            values are paths inside the container.
+          additionalProperties:
+            type: string
+          example:
+            /home/gnomock/project/testdata: /data
+        extraHosts:
+          type: array
+          description: >
+            Extra entries for the container's hosts file, like the
+            `--add-host` flag of `docker run`.
+          items:
+            type: string
+            example: db.local:127.0.0.1
+        reuse:
+          type: boolean
+          description: >
+            Reuses a running container with the same `container_name` and
+            image instead of replacing it, and disables automatic cleanup.
+            Requires `container_name`.
+        customImage:
+          type: string
+          description: >
+            Overrides the image (registry, repository and tag) set by the
+            preset.
+          example: registry.example.com/library/postgres:16.2
+        user:
+          type: string
+          description: >
+            User the container runs as, in any format accepted by the `--user`
+            flag of `docker run`.
+          example: "1000:1000"
       description: >
         This object includes general Gnomock configuration, similar to all
         presets. Timeout configuration is especially useful for

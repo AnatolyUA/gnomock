@@ -461,23 +461,13 @@ func TestSwaggerPresetJSONTags(t *testing.T) {
 func TestSwaggerOptionsJSONTags(t *testing.T) {
 	t.Parallel()
 
-	// Known gap, fixed in PLAN.md Phase 4/7.
-	knownGaps := []string{
-		`options: go field "entrypoint" missing from swagger`,
-		`options: go field "host_mounts" missing from swagger`,
-		`options: go field "extraHosts" missing from swagger`,
-		`options: go field "reuse" missing from swagger`,
-		`options: go field "customImage" missing from swagger`,
-		`options: go field "user" missing from swagger`,
-	}
-
 	doc := loadSwagger(t)
 
 	goKeys := jsonFieldNames(t, reflect.TypeFor[gnomock.Options]())
 	swaggerKeys := propertyNames(doc.optionsSchema(t))
 
-	require.ElementsMatch(t, knownGaps, compareKeys("options", goKeys, swaggerKeys),
-		"new mismatch between gnomock.Options json tags and swagger, or a known gap was fixed: update knownGaps")
+	require.Empty(t, compareKeys("options", goKeys, swaggerKeys),
+		"mismatch between gnomock.Options json tags and the swagger options schema")
 }
 
 func TestSwaggerResponseJSONTags(t *testing.T) {
