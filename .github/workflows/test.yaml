@@ -197,21 +197,6 @@ jobs:
           go-version: '1.27'
       - name: Get dependencies
         run: go mod download
-      - name: "TEMPORARY: mssql startup diagnostics"
-        if: matrix.preset == 'mssql'
-        continue-on-error: true
-        run: |
-          start() { n=$1; shift; docker run -d --name "$n" "$@" >/dev/null; }
-          start a-sa2025 -e ACCEPT_EULA=Y -e 'SA_PASSWORD=Gn0m!ck~' -p 1433 mcr.microsoft.com/mssql/server:2025-latest
-          start b-msa2025 -e ACCEPT_EULA=Y -e 'MSSQL_SA_PASSWORD=Gn0m!ck~' -p 1433 mcr.microsoft.com/mssql/server:2025-latest
-          start c-sa2022 -e ACCEPT_EULA=Y -e 'SA_PASSWORD=Gn0m!ck~' -p 1433 mcr.microsoft.com/mssql/server:2022-latest
-          start d-sa2019 -e ACCEPT_EULA=Y -e 'SA_PASSWORD=Gn0m!ck~' -p 1433 mcr.microsoft.com/mssql/server:2019-latest
-          sleep 30
-          for n in a-sa2025 b-msa2025 c-sa2022 d-sa2019; do
-            echo "=== $n"; docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' "$n"
-            docker logs "$n" 2>&1 | head -15
-          done
-          docker rm -f a-sa2025 b-msa2025 c-sa2022 d-sa2019 >/dev/null
       - name: Test preset
         run: go test -race -v ./preset/${{ matrix.preset }}/...
       - name: Test server
