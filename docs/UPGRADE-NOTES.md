@@ -120,7 +120,9 @@ below are the ones that can change behavior or break a build.
 
 - **MongoDB 8.0 and 8.3 are skipped in CI.** They refuse to start on Linux 6.19+
   kernels (which the CI runners use) until mongo 8.0.37 / 8.3.16 are published.
-  They pass on older kernels. The removal steps are in the
+  They pass on older kernels, and also passed on OrbStack's 7.2 kernel, so the
+  trigger is a kernel feature or config, not the version alone. The removal
+  steps are in the
   `TODO(mongo-kernel-guard)` comment in `preset/mongo/preset_test.go`.
 - **mssql 2017 and Go's x509 check.** SQL Server 2017 creates a self-signed
   certificate with a random serial number, and it is often negative. Go 1.23+
@@ -134,5 +136,17 @@ below are the ones that can change behavior or break a build.
   newer are not affected.
 - **azblob is held at v1.7.0.** v1.8.x sends a storage API version that no
   released Azurite (newest 3.37.0) accepts.
+- **cmd/cleaner outside the workspace.** `cmd/cleaner/go.mod` still requires
+  the published gnomock v0.32.0. `go.work` makes local and CI builds use this
+  branch's code, but `GOWORK=off` builds of the cleaner (or `go install` of it)
+  use v0.32.0.
+- **amd64-only presets on arm64 hosts.** The splunk and mssql tests pull their
+  images through the Docker Go SDK, which ignores `DOCKER_DEFAULT_PLATFORM`, so
+  they fail on an arm64 host with `no matching manifest for linux/arm64`.
+  Workaround: `docker pull --platform linux/amd64` the images first and start
+  with `WithUseLocalImagesFirst` (JSON `use_local_images_first`) and a longer
+  timeout; under emulation splunk needs about 95s per version.
+- **Splunk 10.6** (10.6.1 since 2026-10-01) is not adopted yet: there is no
+  floating `10.6` tag, and the default stays `10.4`.
 - **CodeQL** is disabled on the fork by GitHub (`disabled_fork`) and did not run
   on this branch.

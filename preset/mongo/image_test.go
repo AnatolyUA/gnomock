@@ -13,7 +13,7 @@ import (
 // configuring the preset: the public constructor, WithVersion, and the JSON
 // path used by gnomockd (a zero-value P decoded from the request body). The
 // expected strings are hardcoded on purpose, so that changing a default image
-// (PLAN.md Phase 6) has to update this test deliberately.
+// has to update this test deliberately.
 func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 

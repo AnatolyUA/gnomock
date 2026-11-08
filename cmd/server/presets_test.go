@@ -78,8 +78,8 @@ func TestPresets_unknown(t *testing.T) {
 // TestPresets_defaultImage pins the image gnomockd starts for a request with
 // an empty preset object: registry.Find, JSON decoding of "{}" into the
 // preset, then Options() before Image(), as gnomock.Start does. The expected
-// strings are hardcoded on purpose, so that changing a default image (PLAN.md
-// Phase 6) has to update this test deliberately.
+// strings are hardcoded on purpose, so that changing a default image has to
+// update this test deliberately.
 func TestPresets_defaultImage(t *testing.T) {
 	t.Parallel()
 
