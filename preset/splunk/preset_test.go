@@ -25,6 +25,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestPreset(t *testing.T) {
+	for _, version := range []string{"10.0", "10.2", "10.4"} {
+		t.Run(version, func(t *testing.T) { testPreset(t, version) })
+	}
+}
+
+// TestPreset_withDefaults uses the default version. The license and an admin
+// password have no defaults: Splunk doesn't start without them.
+func TestPreset_withDefaults(t *testing.T) {
+	p := splunk.Preset(splunk.WithLicense(true), splunk.WithPassword("12345678"))
+	c, err := gnomock.Start(p)
+
+	defer func() { require.NoError(t, gnomock.Stop(c)) }()
+
+	require.NoError(t, err)
+
+	err = splunk.Ingest(context.Background(), c, "12345678", splunk.Event{
+		Index:      "main",
+		Source:     "gnomock",
+		SourceType: "test",
+		Event:      "default version",
+		Time:       time.Now().UnixNano(),
+	})
+	require.NoError(t, err)
+}
+
+func testPreset(t *testing.T, version string) {
+	t.Helper()
+
 	events := make([]splunk.Event, 1000)
 
 	for i := range events {
@@ -48,7 +76,7 @@ func TestPreset(t *testing.T) {
 	}
 
 	p := splunk.Preset(
-		splunk.WithVersion("8.0.2.1"),
+		splunk.WithVersion(version),
 		splunk.WithLicense(true),
 		splunk.WithPassword("12345678"),
 		splunk.WithValues(events),

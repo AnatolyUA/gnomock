@@ -3,7 +3,7 @@
         "values_file": "./testdata/splunk/events.jsonl",
         "admin_password": "12345678",
         "accept_license": true,
-        "version": "8.0.2.1"
+        "version": "10.2"
     },
     "options": {
     }

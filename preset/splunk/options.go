@@ -28,9 +28,14 @@ func WithValuesFile(file string) Option {
 	}
 }
 
-// WithLicense lets the user choose to accept Splunk enterprise license
-// (see more at https://hub.docker.com/_/splunk-enterprise). Failure to accept
-// the license will prevent Splunk container from starting.
+// WithLicense lets the user choose to accept Splunk enterprise license and
+// the current Splunk General Terms
+// (https://www.splunk.com/en_us/legal/splunk-general-terms.html; see more at
+// https://hub.docker.com/r/splunk/splunk). Accepting sets both
+// SPLUNK_START_ARGS=--accept-license and
+// SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com, which Splunk 10
+// requires. Failure to accept the license will prevent Splunk container from
+// starting.
 func WithLicense(accept bool) Option {
 	return func(o *P) {
 		o.AcceptLicense = accept

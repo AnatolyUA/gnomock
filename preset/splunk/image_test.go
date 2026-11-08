@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/splunk/splunk:latest"
+		defaultImage = "docker.io/splunk/splunk:10.4"
 		customImage  = "docker.io/splunk/splunk:9.4"
 	)
 

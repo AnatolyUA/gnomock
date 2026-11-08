@@ -4,6 +4,10 @@
 //
 // Splunk image is relatively heavy (larger than 1.5GB), and its startup time
 // is longer than usual. Using this container may make the tests much longer.
+//
+// Splunk publishes its images for linux/amd64 only, so this preset doesn't
+// work on arm64 hosts. The default version is 10.4; 10.0, 10.2 and 10.4 are
+// tested.
 package splunk
 
 import (
@@ -29,7 +33,7 @@ const (
 	WebPort string = "web"
 )
 
-const defaultVersion = "latest"
+const defaultVersion = "10.4"
 
 func init() {
 	registry.Register("splunk", func() gnomock.Preset { return &P{} })
@@ -84,6 +88,7 @@ func (p *P) Options() []gnomock.Option {
 		opts = append(
 			opts,
 			gnomock.WithEnv("SPLUNK_START_ARGS=--accept-license"),
+			gnomock.WithEnv("SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com"),
 		)
 	}
 

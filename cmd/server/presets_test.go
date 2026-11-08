@@ -100,7 +100,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"postgres":    "docker.io/library/postgres:18",
 		"rabbitmq":    "docker.io/library/rabbitmq:4.4",
 		"redis":       "docker.io/library/redis:8.10",
-		"splunk":      "docker.io/splunk/splunk:latest",
+		"splunk":      "docker.io/splunk/splunk:10.4",
 		"vault":       "hashicorp/vault:2.2",
 	}
 
