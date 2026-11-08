@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/elasticsearch:8.13.0"
+		defaultImage = "docker.io/library/elasticsearch:9.5.5"
 		customImage  = "docker.io/library/elasticsearch:8.19.2"
 	)
 

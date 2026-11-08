@@ -21,8 +21,16 @@ func TestMain(m *testing.M) {
 // resources
 
 func TestPreset(t *testing.T) {
+	for _, version := range []string{"8.19.23", "9.4.8", "9.5.5"} {
+		t.Run(version, func(t *testing.T) { testSearch(t, version) })
+	}
+}
+
+func testSearch(t *testing.T, version string) {
+	t.Helper()
+
 	p := elastic.Preset(
-		elastic.WithVersion("8.13.0"),
+		elastic.WithVersion(version),
 		elastic.WithInputFile("./testdata/titles"),
 		elastic.WithInputFile("./testdata/names"),
 	)

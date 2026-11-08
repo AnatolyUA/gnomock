@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultVersion = "8.13.0"
+	defaultVersion = "9.5.5"
 	defaultPort    = 9200
 )
 
@@ -30,7 +30,7 @@ func init() {
 // Elasticsearch specific healthcheck function and default Elasticsearch image
 // and port.
 //
-// By default, version 8.7.0 is used.
+// By default, version 9.5.5 is used. Elasticsearch 8.19 and 9.x are tested.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
