@@ -385,11 +385,10 @@ func (d *docker) createContainer(
 		return &resp, nil
 	}
 
-	matches := duplicateContainerRegexp.FindStringSubmatch(err.Error())
-	if len(matches) == 2 {
-		d.log.Infow("duplicate container found, stopping", "container", matches[1])
+	if duplicateID := duplicateContainerID(err, cfg.ContainerName); duplicateID != "" {
+		d.log.Infow("duplicate container found, stopping", "container", duplicateID)
 
-		_, err = d.client.ContainerRemove(ctx, matches[1], client.ContainerRemoveOptions{
+		_, err = d.client.ContainerRemove(ctx, duplicateID, client.ContainerRemoveOptions{
 			Force: true,
 		})
 		if err != nil {
@@ -400,6 +399,24 @@ func (d *docker) createContainer(
 	}
 
 	return &resp, err
+}
+
+// duplicateContainerID returns the container to remove when a container
+// create failed because another container already uses the requested name, or
+// an empty string for any other error. The daemon reports a name conflict as
+// a conflict error (HTTP 409) whose message names the existing container's ID.
+// If the message doesn't match the known format, the name is returned
+// instead: the daemon accepts it in place of an ID.
+func duplicateContainerID(err error, name string) string {
+	if name == "" || !cerrdefs.IsConflict(err) {
+		return ""
+	}
+
+	if matches := duplicateContainerRegexp.FindStringSubmatch(err.Error()); len(matches) == 2 {
+		return matches[1]
+	}
+
+	return name
 }
 
 func (d *docker) findReusableContainer(
@@ -525,6 +542,11 @@ func (d *docker) hostAddr() string {
 	return localhostAddr
 }
 
+// isDeletionAlreadyInProgessError reports whether a forced container remove
+// failed only because the daemon is already removing that container. The
+// daemon reports it as a conflict error (HTTP 409); the API has no more
+// specific error type, so the message identifies the case.
 func isDeletionAlreadyInProgessError(err error, id string) bool {
-	return err.Error() == fmt.Sprintf("Error response from daemon: removal of container %s is already in progress", id)
+	return cerrdefs.IsConflict(err) &&
+		strings.Contains(err.Error(), fmt.Sprintf("removal of container %s is already in progress", id))
 }

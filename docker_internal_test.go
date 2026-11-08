@@ -510,6 +510,14 @@ func TestDuplicateContainerRegexp(t *testing.T) {
 	}
 }
 
+// conflictError gives err the conflict type (HTTP 409) that moby/client
+// attaches to daemon errors, so cerrdefs.IsConflict recognizes it.
+type conflictError struct{ error }
+
+func (conflictError) Conflict() {}
+
+func (e conflictError) Unwrap() error { return e.error }
+
 func TestIsDeletionAlreadyInProgessError(t *testing.T) {
 	t.Parallel()
 
@@ -521,38 +529,44 @@ func TestIsDeletionAlreadyInProgessError(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "exact message",
-			err:      errors.New("Error response from daemon: removal of container " + id + " is already in progress"),
+			name: "exact message",
+			err: conflictError{
+				errors.New("Error response from daemon: removal of container " + id + " is already in progress"),
+			},
 			expected: true,
 		},
 		{
 			name: "client wrapped message",
-			err: fmt.Errorf("Error response from daemon: %w",
-				errors.New("removal of container "+id+" is already in progress")),
+			err: conflictError{fmt.Errorf("Error response from daemon: %w",
+				errors.New("removal of container "+id+" is already in progress"))},
 			expected: true,
 		},
 		{
 			name:     "other container id",
-			err:      errors.New("Error response from daemon: removal of container other is already in progress"),
+			err:      conflictError{errors.New("Error response from daemon: removal of container other is already in progress")},
 			expected: false,
 		},
 		{
-			// Current behavior: the match is on the exact string, so the
-			// message without the client prefix doesn't match.
+			// Matched on the conflict type and the message, not on the
+			// client's exact formatting.
 			name:     "missing client prefix",
-			err:      errors.New("removal of container " + id + " is already in progress"),
-			expected: false,
+			err:      conflictError{errors.New("removal of container " + id + " is already in progress")},
+			expected: true,
 		},
 		{
-			// Current behavior: any extra wrapping breaks the exact match.
 			name: "wrapped again",
 			err: fmt.Errorf("remove: %w",
-				errors.New("Error response from daemon: removal of container "+id+" is already in progress")),
-			expected: false,
+				conflictError{errors.New("Error response from daemon: removal of container " + id + " is already in progress")}),
+			expected: true,
 		},
 		{
 			name:     "other message",
-			err:      errors.New("Error response from daemon: No such container: " + id),
+			err:      conflictError{errors.New("Error response from daemon: No such container: " + id)},
+			expected: false,
+		},
+		{
+			name:     "same message without the conflict type",
+			err:      errors.New("Error response from daemon: removal of container " + id + " is already in progress"),
 			expected: false,
 		},
 	}
@@ -562,6 +576,72 @@ func TestIsDeletionAlreadyInProgessError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, tt.expected, isDeletionAlreadyInProgessError(tt.err, id))
+		})
+	}
+}
+
+func TestDuplicateContainerID(t *testing.T) {
+	t.Parallel()
+
+	const (
+		id         = "6a8f1e2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f"
+		name       = "gnomock-dup"
+		daemonText = `Error response from daemon: Conflict. The container name "/` + name +
+			`" is already in use by container "` + id +
+			`". You have to remove (or rename) that container to be able to reuse that name.`
+	)
+
+	tests := []struct {
+		name          string
+		err           error
+		containerName string
+		expected      string
+	}{
+		{
+			name:          "name conflict",
+			err:           conflictError{errors.New(daemonText)},
+			containerName: name,
+			expected:      id,
+		},
+		{
+			name:          "wrapped name conflict",
+			err:           fmt.Errorf("create: %w", conflictError{errors.New(daemonText)}),
+			containerName: name,
+			expected:      id,
+		},
+		{
+			// A future daemon may word the message differently; the name
+			// identifies the same container.
+			name:          "conflict with unknown message",
+			err:           conflictError{errors.New("Error response from daemon: name " + name + " is taken")},
+			containerName: name,
+			expected:      name,
+		},
+		{
+			name:          "no container name",
+			err:           conflictError{errors.New(daemonText)},
+			containerName: "",
+			expected:      "",
+		},
+		{
+			name:          "not a conflict",
+			err:           errors.New(daemonText),
+			containerName: name,
+			expected:      "",
+		},
+		{
+			name:          "other error",
+			err:           errors.New("Error response from daemon: No such image: foo"),
+			containerName: name,
+			expected:      "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tt.expected, duplicateContainerID(tt.err, tt.containerName))
 		})
 	}
 }
