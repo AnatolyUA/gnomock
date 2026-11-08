@@ -316,17 +316,61 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       9.7.4, 26.10.0). Per-arch split and both arm64 skips removed; gnomockd testdata asks
       for 8.4. `caching_sha2_password` over plain TCP works. Passed locally: preset and
       gnomockd.
+- [x] **postgres** (`248d6bf`). Default `18`; matrix 15, 16, 17, 18 (19 is rc only).
+      **Bug fix:** the preset always passed an empty `TZ=`; current 17/18 images turn
+      that into server timezone `UNIVERSAL0`, so `TZ` is now set only with
+      `WithTimezone`. No volume mounts, so the PG 18 data-dir change is irrelevant.
+- [x] **mariadb** (`ccdaae4`). Default `12.3`; matrix 10.11, 11.4, 11.8, 12.3, 13.0
+      (13.1 is rc). No `mysql*` binaries are used; `MYSQL_*` env aliases still work.
+- [x] **redis** (`ba55013`). Default `8.10`; matrix 6.2, 7.2, 7.4, 8.2, 8.10. New
+      `TestPreset_withDefaults`.
+- [ ] **mongo** (`5ca7ce9`). Default `9.0`; matrix 7.0, 8.0, 8.3, 9.0. Passes locally
+      (kernel 6.18). **Red in CI, blocked on the owner's decision** (see Risks, "MongoDB
+      kernel guard"): 8.0 and 8.3 exit at startup on both runner images.
+- [x] **memcached** (`6a1b6b6`). Default and matrix `1.6.45` (exact).
+- [x] **rabbitmq** (`4a5a199`). Default `4.4`; matrix 4.3-alpine, 4.4-alpine,
+      4.4-management-alpine. RabbitMQ 4.3+ refuses transient non-exclusive queues by
+      default, which broke `WithMessages` and the test's own (typical user) queue
+      declaration. The preset now permits the deprecated `transient_nonexcl_queues`
+      feature via `RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS`. No mirrored queues were used.
+- [x] **cassandra** (`013a3d1`). Default `5.0`; matrix 4.0, 4.1, 5.0 (6.0 is alpha). New
+      `TestPreset_withDefaults`.
+- [x] **elastic** (`f3de139`). Default `9.5.5`; matrix 8.19.23, 9.4.8, 9.5.5. Passed
+      locally only with the disk threshold disabled in an uncommitted test change; CI
+      green (run 42447105580).
+- [x] **influxdb** (`d4d8486`). Default `2.9-alpine`; matrix 2.8-alpine, 2.9-alpine.
+      Package doc: 2.x only, floating tags may point to v3.
+- [x] **k3s** (`4e3296a`). Default `v1.37.2-k3s1`; matrix v1.35.10, v1.36.6, v1.37.2.
+      The v1.17 semver branch is gone, and with it `golang.org/x/mod`. **Finding:**
+      Kubernetes 1.35+ kubelets refuse cgroup v1 hosts; documented in the package doc
+      with the `K3sServerFlags` workaround `--kubelet-arg=fail-cgroupv1=false` (node
+      Ready on this cgroup v1 host with it). Not added to the preset by default: kubelets
+      before 1.31 reject the flag. Locally the pods still can't start (containerd in k3s
+      can't pull through the session's TLS proxy); CI green (run 42447105580).
+- [x] **cockroachdb** (`cc029f8`). Default `v26.3.5`; matrix v24.3.37, v25.2.27,
+      v25.4.20, v26.2.11, v26.3.5. No version-dependent flags.
+- [x] **kafka** (`000c13d`). Default `4.3.1-L0`; matrix 3.9.0-L0, 4.3.1-L0. In 4.3.1
+      nothing listens on 2181 (checked in a running container); the `zookeeper` port is
+      exposed only below 4, and `ZooKeeperPort` is deprecated.
+- [x] **vault** (`d78ac81`). Default and matrix `2.2`. `vault.json` fixed and its two
+      allowlist entries removed. No Vault 2.0 change affected the dev server, tokens,
+      auth mounts or policies.
+- [x] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
+      2025, all passing locally. Default driver encryption works with 2022/2025. Package
+      doc: amd64 only.
+- [x] **azurite** (`7dbc018`). Default `3.37.0` (still newest), azblob v1.7.0. New
+      `TestPreset_withDefaults`.
 
 For every row:
 
-- [ ] Update the `defaultVersion` constant and the doc comments.
-- [ ] Update the `preset_test.go` matrix.
-- [ ] Update the gnomockd testdata JSON. It is stale today: kafka 2.5.1, localstack 0.11,
+- [x] Update the `defaultVersion` constant and the doc comments.
+- [x] Update the `preset_test.go` matrix.
+- [x] Update the gnomockd testdata JSON. It is stale today: kafka 2.5.1, localstack 0.11,
       elastic 8.7, and several `latest` tags. Also fix `vault.json`: it nests `options`
       inside `preset`, so the decoder silently ignores it. Then remove its two allowlist
       entries in `internal/gnomockd/swagger_test.go`.
-- [ ] Add a `withDefaults` test where one is missing (azurite, cassandra, redis, splunk).
-- [ ] Run the preset and gnomockd tests locally.
+- [x] Add a `withDefaults` test where one is missing (azurite, cassandra, redis, splunk).
+- [x] Run the preset and gnomockd tests locally (elastic and k3s: CI only, see above).
 
 ## Phase 7: API docs and generated code
 
@@ -384,18 +428,40 @@ For every row:
    `Content-Type: text/plain`.
 10. **LocalStack ports.** The container no longer exposes the `web` port (8080), which
     only LocalStack before 0.11.3 served. Images before 1.3.0 are not supported.
-11. **Pull failures fail at pull time.** An unknown tag or a denied pull now fails with
+11. **Postgres timezone.** `TZ` is passed only when `WithTimezone` is used. Before, an
+    empty `TZ=` was always passed, which current images turn into `UNIVERSAL0`.
+12. **RabbitMQ.** The preset permits transient non-exclusive queues
+    (`transient_nonexcl_queues`), which RabbitMQ 4.3+ refuses by default, through
+    `RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS`. A user value for that variable replaces it.
+13. **Kafka ports.** With Kafka 4 (the default), the `zookeeper` port is not exposed.
+14. **k3s.** Kubernetes 1.35+ (the default) needs a cgroup v2 Docker host. Without
+    `WithVersion`, traefik still runs (unchanged).
+15. **Splunk.** `WithLicense(true)` also accepts the Splunk General Terms
+    (`SPLUNK_GENERAL_TERMS`), which Splunk 10 requires. The default is 10.4, not `latest`.
+16. **Pull failures fail at pull time.** An unknown tag or a denied pull now fails with
     `can't pull image: ...` and the daemon's message, instead of a later
     `can't create container: ... No such image`.
 
 ## Risks and open verification items
 
-- **Kafka 4.x.** Unclear whether port 2181 is actually served. Decided empirically in
-  Phase 6.
-- **Splunk.** The `SPLUNK_GENERAL_TERMS` requirement is unconfirmed. Decided empirically.
-- **LocalStack 4.x.** Possible healthcheck/endpoint changes.
-- **k3s.** Recent versions on this cgroup v1 container host may fail locally. If so, rely
-  on CI (cgroup v2).
+- **MongoDB kernel guard (open, needs the owner's decision).** MongoDB 8.x refuses to
+  start on Linux kernels 6.19+ unless the build exempts the kernel (SERVER-121912,
+  SERVER-125742, SERVER-131779): `MongoDB cannot start: Linux kernel versions 6.19 and
+  newer has a known incompatibility with this version of MongoDB`. Both CI runner
+  images (ubuntu-26.04 and ubuntu-24.04-arm) trip it. Status on 2026-11-08: 7.0.45 and
+  9.0.4 start; the newest 8.0 (8.0.34) and 8.3 (8.3.13) images exit. Upstream fixed
+  Ubuntu kernels in 8.0.37 / 8.3.16, which aren't published yet. On amd64 the 8.0
+  container exits after its network is up, so the healthcheck spins until the 10-minute
+  default timeout and the job times out. Options: drop 8.0/8.3 from the matrix for now,
+  skip them in CI until the fixed images ship, or run the mongo jobs on a runner with
+  an older kernel.
+- ~~**Kafka 4.x.** Unclear whether port 2181 is actually served.~~ Not served in 4.3.1.
+- ~~**Splunk.** The `SPLUNK_GENERAL_TERMS` requirement is unconfirmed.~~ Confirmed: 10.4
+  exits without it.
+- ~~**LocalStack 4.x.** Possible healthcheck/endpoint changes.~~ None for 4.14/2026.10.
+- **k3s.** Confirmed: Kubernetes 1.35+ refuses this cgroup v1 host unless
+  `--kubelet-arg=fail-cgroupv1=false` is passed; even then, pods can't pull images
+  through the session's TLS-intercepting proxy. CI (cgroup v2) is the authority.
 - **Disk.** Splunk, mssql, elastic and k3s images are large, so prune between runs.
 - **Docker Hub rate limit (local only).** Anonymous pulls from this session get HTTP 429.
   The local `dockerd` uses `mirror.gcr.io` as a registry mirror (session config in
@@ -408,7 +474,8 @@ For every row:
   (`unavailable_shards_exception`, same failure at the pre-Phase-3 baseline `da8713e`),
   and k3s taints its node `disk-pressure`, so the kubeconfig pod never schedules. CI is
   the authority for these two presets.
-- **localstack CI is red until Phase 6.** `[preset] localstack` fails on the
+- ~~**localstack CI is red until Phase 6.**~~ Fixed by `6240b32`; green since run
+  42443778832, including the 2026.10 case with the token. `[preset] localstack` fails on the
   `TestPreset_s3/0.12.2` case only: `localstack/localstack:0.12.2` has been deleted from
   Docker Hub (pull returns "not found"). Every other job was green on the Phase 4 run
   (42440676788). Phase 6 replaces the localstack matrix and removes the case.
