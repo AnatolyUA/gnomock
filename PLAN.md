@@ -391,6 +391,10 @@ For every row:
   (`unavailable_shards_exception`, same failure at the pre-Phase-3 baseline `da8713e`),
   and k3s taints its node `disk-pressure`, so the kubeconfig pod never schedules. CI is
   the authority for these two presets.
+- **localstack CI is red until Phase 6.** `[preset] localstack` fails on the
+  `TestPreset_s3/0.12.2` case only: `localstack/localstack:0.12.2` has been deleted from
+  Docker Hub (pull returns "not found"). Every other job was green on the Phase 4 run
+  (42440676788). Phase 6 replaces the localstack matrix and removes the case.
 - **Kafka CI flake.** `[preset] kafka` `TestPreset_withDefaults` (existing test) once hung
   in the healthcheck wait until the 10-minute test timeout (run 42405470107). It passed on
   re-run and locally in 58s. Re-run once before treating a kafka timeout as real; if it
