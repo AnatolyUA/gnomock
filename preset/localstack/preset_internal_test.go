@@ -1,101 +1,56 @@
 package localstack
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/orlangure/gnomock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestHealthCheckAddress(t *testing.T) {
-	legacyPath := "http://127.0.0.1:33333/health"
-	notSoLegacyPath := "http://127.0.0.1:44444/health"
-	newPath := "http://127.0.0.1:44444/_localstack/health"
+// TestOptions_authToken checks which LOCALSTACK_AUTH_TOKEN the container gets:
+// the explicit token wins over the host's environment variable, and no
+// variable is passed when neither is set.
+func TestOptions_authToken(t *testing.T) {
 	tests := []struct {
-		version  string
-		expected string
+		name    string
+		token   string
+		hostEnv string
+		want    []string
 	}{
+		{name: "none", want: nil},
+		{name: "explicit", token: "explicit", want: []string{"LOCALSTACK_AUTH_TOKEN=explicit"}},
+		{name: "host env", hostEnv: "from-env", want: []string{"LOCALSTACK_AUTH_TOKEN=from-env"}},
 		{
-			version:  "0.10.0",
-			expected: legacyPath,
-		},
-		{
-			version:  "unexpected",
-			expected: newPath,
-		},
-		{
-			version:  "latest",
-			expected: newPath,
-		},
-		{
-			version:  "0.12.9",
-			expected: notSoLegacyPath,
-		},
-		{
-			version:  "1.10.0",
-			expected: newPath,
-		},
-		{
-			version:  "0.12.0",
-			expected: notSoLegacyPath,
-		},
-		{
-			version:  "0.10.4",
-			expected: legacyPath,
-		},
-		{
-			version:  "0.11.3",
-			expected: notSoLegacyPath,
-		},
-		{
-			version:  "0.11.4",
-			expected: notSoLegacyPath,
-		},
-		{
-			version:  "foo.11.4",
-			expected: newPath,
-		},
-		{
-			version:  "0.foo.4",
-			expected: newPath,
-		},
-		{
-			version:  "0.11.foo",
-			expected: newPath,
-		},
-		{
-			version:  "1.2.0",
-			expected: notSoLegacyPath,
-		},
-		{
-			version:  "3.0.0",
-			expected: newPath,
-		},
-		{
-			version:  defaultVersion,
-			expected: newPath,
+			name:    "explicit wins",
+			token:   "explicit",
+			hostEnv: "from-env",
+			want:    []string{"LOCALSTACK_AUTH_TOKEN=explicit"},
 		},
 	}
 
-	c := &gnomock.Container{
-		Host: "127.0.0.1",
-		Ports: gnomock.NamedPorts{
-			"web": gnomock.Port{
-				Protocol: "tcp",
-				Port:     33333,
-			},
-			"api": gnomock.Port{
-				Protocol: "tcp",
-				Port:     44444,
-			},
-		},
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(authTokenEnv, tt.hostEnv)
 
-	for _, test := range tests {
-		t.Run(test.version, func(t *testing.T) {
-			p := P{Version: test.version}
-			actual := p.healthCheckAddress(c)
-			require.Equal(t, test.expected, actual)
+			p := &P{Services: []Service{S3}}
+			WithAuthToken(tt.token)(p)
+
+			o := &gnomock.Options{}
+			for _, opt := range p.Options() {
+				opt(o)
+			}
+
+			var got []string
+
+			for _, env := range o.Env {
+				if strings.HasPrefix(env, authTokenEnv+"=") {
+					got = append(got, env)
+				}
+			}
+
+			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.token, p.AuthToken, "the host token must not be stored in the preset")
 		})
 	}
 }

@@ -631,7 +631,13 @@ components:
         version:
           type: string
           description: Docker image tag (version)
-          default: latest
+          default: '4.14'
+        auth_token:
+          type: string
+          description: >
+            LocalStack auth token, needed by 2026.x and newer images. When
+            empty, gnomockd uses its own LOCALSTACK_AUTH_TOKEN environment
+            variable, if set. The default version doesn't need a token.
       required:
         - services
       example:

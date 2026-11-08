@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/localstack/localstack:0.14.0"
+		defaultImage = "docker.io/localstack/localstack:4.14"
 		customImage  = "docker.io/localstack/localstack:3.8"
 	)
 

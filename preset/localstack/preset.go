@@ -8,21 +8,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+	"os"
 	"strings"
 
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/internal/registry"
 )
 
-const (
-	webPort = "web"
+// APIPort should be used to configure AWS SDK endpoint.
+const APIPort = "api"
 
-	// APIPort should be used to configure AWS SDK endpoint.
-	APIPort = "api"
-)
+// defaultVersion is the last LocalStack release that runs without an auth
+// token. Newer (2026.x) images need one, see WithAuthToken.
+const defaultVersion = "4.14"
 
-const defaultVersion = "0.14.0"
+// authTokenEnv is the environment variable LocalStack reads its auth token
+// from. The preset also falls back to it on the host, like LocalStack's own
+// tooling does.
+const authTokenEnv = "LOCALSTACK_AUTH_TOKEN" //nolint:gosec // variable name, not a credential
 
 func init() {
 	registry.Register("localstack", func() gnomock.Preset { return &P{} })
@@ -33,7 +36,8 @@ func init() {
 // provide any services using WithServices options, but in such case a new
 // localstack container will be useless.
 //
-// This Preset cannot be used with localstack image prior to 0.11.0.
+// This Preset cannot be used with localstack images prior to 1.3.0. It is
+// tested with 3.8, 4.14 and 2026.x (with an auth token).
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
@@ -46,9 +50,10 @@ func Preset(opts ...Option) gnomock.Preset {
 
 // P is a Gnomock Preset localstack implementation.
 type P struct {
-	Services []Service `json:"services"`
-	S3Path   string    `json:"s3_path"`
-	Version  string    `json:"version"`
+	Services  []Service `json:"services"`
+	S3Path    string    `json:"s3_path"`
+	Version   string    `json:"version"`
+	AuthToken string    `json:"auth_token"`
 }
 
 // Image returns an image that should be pulled to create this container.
@@ -59,7 +64,6 @@ func (p *P) Image() string {
 // Ports returns ports that should be used to access this container.
 func (p *P) Ports() gnomock.NamedPorts {
 	return gnomock.NamedPorts{
-		webPort: {Protocol: "tcp", Port: 8080},
 		APIPort: {Protocol: "tcp", Port: 4566},
 	}
 }
@@ -81,7 +85,22 @@ func (p *P) Options() []gnomock.Option {
 		gnomock.WithInit(p.initf()),
 	}
 
+	if token := p.authToken(); token != "" {
+		opts = append(opts, gnomock.WithEnv(authTokenEnv+"="+token))
+	}
+
 	return opts
+}
+
+// authToken returns the configured auth token, or the host's
+// LOCALSTACK_AUTH_TOKEN when none is configured. The host value is not stored
+// in the preset, so it never ends up in serialized presets.
+func (p *P) authToken() string {
+	if p.AuthToken != "" {
+		return p.AuthToken
+	}
+
+	return os.Getenv(authTokenEnv)
 }
 
 func (p *P) setDefaults() {
@@ -92,7 +111,7 @@ func (p *P) setDefaults() {
 
 func (p *P) healthcheck(services []string) gnomock.HealthcheckFunc {
 	return func(ctx context.Context, c *gnomock.Container) (err error) {
-		addr := p.healthCheckAddress(c)
+		addr := fmt.Sprintf("http://%s/_localstack/health", c.Address(APIPort))
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, addr, nil)
 		if err != nil {
@@ -129,71 +148,14 @@ func (p *P) healthcheck(services []string) gnomock.HealthcheckFunc {
 
 		for _, service := range services {
 			status := hr.Services[service]
-			// available status was added in 0.13.0: it allows to lazy load the
-			// services after the first request
+			// available status means that the service is lazy loaded on the
+			// first request
 			if status != "running" && status != "available" {
 				return fmt.Errorf("service '%s' is not running", service)
 			}
 		}
 
 		return nil
-	}
-}
-
-// healthCheckAddress returns the address of `/health` endpoint of a running
-// localstack container. Before version 0.11.3, the endpoint was available at
-// port 8080. In 0.11.3, the endpoint was moved to the default port (4566). In
-// 1.3.0, the endpoint was moved under `_localstack` prefix.
-func (p *P) healthCheckAddress(c *gnomock.Container) string {
-	defaultPath := fmt.Sprintf("http://%s/_localstack/health", c.Address(APIPort))
-	legacyPath := fmt.Sprintf("http://%s/health", c.Address(webPort))
-	notSoLegacyPath := fmt.Sprintf("http://%s/health", c.Address(APIPort))
-
-	if p.Version == defaultVersion {
-		return defaultPath
-	}
-
-	versionParts := strings.Split(p.Version, ".")
-	if len(versionParts) != 3 {
-		return defaultPath
-	}
-
-	major, err := strconv.Atoi(versionParts[0])
-	if err != nil {
-		return defaultPath
-	}
-
-	minor, err := strconv.Atoi(versionParts[1])
-	if err != nil {
-		return defaultPath
-	}
-
-	patch, err := strconv.Atoi(versionParts[2])
-	if err != nil {
-		return defaultPath
-	}
-
-	switch major {
-	case 0:
-		if minor == 11 && patch >= 3 {
-			return notSoLegacyPath
-		}
-
-		if minor >= 12 {
-			return notSoLegacyPath
-		}
-
-		return legacyPath
-
-	case 1:
-		if minor >= 3 {
-			return defaultPath
-		}
-
-		return notSoLegacyPath
-
-	default:
-		return defaultPath
 	}
 }
 

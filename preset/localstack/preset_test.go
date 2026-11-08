@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -28,9 +29,19 @@ func TestMain(m *testing.M) {
 func TestPreset_s3(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"0.12.2", "0.13.1", "0.14.0", "2.3.0", "3.1.0"} {
+	for _, version := range []string{"3.8", "4.14"} {
 		t.Run(version, testS3(version))
 	}
+
+	// 2026.x images need an auth token, which the preset takes from the
+	// LOCALSTACK_AUTH_TOKEN environment variable when WithAuthToken isn't used.
+	t.Run("2026.10", func(t *testing.T) {
+		if os.Getenv("LOCALSTACK_AUTH_TOKEN") == "" {
+			t.Skip("LOCALSTACK_AUTH_TOKEN is not set")
+		}
+
+		testS3("2026.10")(t)
+	})
 }
 
 func testS3(version string) func(*testing.T) {
@@ -107,7 +118,6 @@ func TestPreset_sqs_sns(t *testing.T) {
 
 	p := localstack.Preset(
 		localstack.WithServices(localstack.SNS, localstack.SQS),
-		localstack.WithVersion("3.1.0"),
 	)
 	c, err := gnomock.Start(p, gnomock.WithTimeout(time.Minute*10))
 

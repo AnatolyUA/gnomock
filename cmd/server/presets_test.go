@@ -99,7 +99,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"influxdb":    "docker.io/influxdb:2.7.6-alpine",
 		"kafka":       "docker.io/lensesio/fast-data-dev:3.6.1-L0",
 		"kubernetes":  "docker.io/rancher/k3s:v1.26.3-k3s1",
-		"localstack":  "docker.io/localstack/localstack:0.14.0",
+		"localstack":  "docker.io/localstack/localstack:4.14",
 		"mariadb":     "docker.io/library/mariadb:10.5.8",
 		"memcached":   "docker.io/library/memcached:1.6.9",
 		"mongo":       "docker.io/library/mongo:5.0",

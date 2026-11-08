@@ -21,7 +21,6 @@ func TestWithS3Files(t *testing.T) {
 	p := localstack.Preset(
 		localstack.WithServices(localstack.S3),
 		localstack.WithS3Files("testdata/s3"),
-		localstack.WithVersion("0.11.0"),
 	)
 	c, err := gnomock.Start(p)
 

@@ -95,3 +95,13 @@ func WithVersion(version string) Option {
 		o.Version = version
 	}
 }
+
+// WithAuthToken sets the LocalStack auth token, which LocalStack 2026.x and
+// newer images need to start. When it is not set, the preset uses the
+// LOCALSTACK_AUTH_TOKEN environment variable of the current process, if any.
+// The default version does not need a token.
+func WithAuthToken(token string) Option {
+	return func(o *P) {
+		o.AuthToken = token
+	}
+}
