@@ -92,10 +92,6 @@ func (p *P) Options() []gnomock.Option {
 func (p *P) healthcheck(ctx context.Context, c *gnomock.Container) error {
 	db, err := connect(ctx, c, defaultDatabase)
 	if err != nil {
-		if db != nil {
-			_ = db.Close()
-		}
-
 		return err
 	}
 
@@ -186,5 +182,12 @@ func connect(ctx context.Context, c *gnomock.Container, db string) (*sql.DB, err
 		return nil, err
 	}
 
-	return conn, conn.PingContext(ctx)
+	// The caller owns the pool only on success: closing it here stops the
+	// pool's opener goroutine when the ping fails or ctx expires.
+	if err := conn.PingContext(ctx); err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+
+	return conn, nil
 }
