@@ -355,9 +355,9 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 - [x] **vault** (`d78ac81`). Default and matrix `2.2`. `vault.json` fixed and its two
       allowlist entries removed. No Vault 2.0 change affected the dev server, tokens,
       auth mounts or policies.
-- [x] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
+- [ ] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
       2025, all passing locally. Default driver encryption works with 2022/2025. Package
-      doc: amd64 only.
+      doc: amd64 only. **Red in CI, cause unknown** (see Risks, "mssql 2022/2025 in CI").
 - [x] **azurite** (`7dbc018`). Default `3.37.0` (still newest), azblob v1.7.0. New
       `TestPreset_withDefaults`.
 - [x] **splunk** (`d928b09`). Default `10.4`; matrix 10.0, 10.2, 10.4. Splunk 10 exits
@@ -375,6 +375,11 @@ For every row:
       entries in `internal/gnomockd/swagger_test.go`.
 - [x] Add a `withDefaults` test where one is missing (azurite, cassandra, redis, splunk).
 - [x] Run the preset and gnomockd tests locally (elastic and k3s: CI only, see above).
+
+**CI status at the end of Phase 6/7** (run 42451050213, final code plus a diagnostic
+step): 23 of 26 jobs green, including elastic, k3s, localstack (2026.10 with the token),
+splunk and the image builds. Red: `[preset] mongo` and the arm64 job (both the MongoDB
+kernel guard) and `[preset] mssql` (2022/2025, see Risks).
 
 ## Phase 7: API docs and generated code
 
@@ -469,6 +474,18 @@ For every row:
   default timeout and the job times out. Options: drop 8.0/8.3 from the matrix for now,
   skip them in CI until the fixed images ship, or run the mongo jobs on a runner with
   an older kernel.
+- **mssql 2022/2025 in CI (open).** On the ubuntu-26.04 runner (kernel 7.0.14 azure),
+  containers that gnomock starts from 2022-latest and 2025-latest exit within ~0.4 s and
+  are auto-removed, so the tests fail with `container network isn't ready: ... No such
+  container` and no logs exist. 2019-latest passes in the same job. Locally (kernel 6.18)
+  all four versions pass. Two temporary CI diagnostic steps (`7318bf6`, `5ad2ff9`, both
+  removed again) showed that a plain `docker run` with the preset's exact env
+  (`ACCEPT_EULA=Y`, `SA_PASSWORD`, the default password) and a published port starts
+  2019, 2022 and 2025 fine on the same runner, so it isn't the image or the kernel alone.
+  Next step: capture the container output in CI, e.g. run the mssql tests with
+  `gnomock.WithDebug(true)` (disables auto-remove) plus `WithLogWriter`, or record
+  `docker events` during the test step. (A middle diagnostic commit, `c18e42f`, broke the
+  workflow file and never ran; `55b6ac9` restored it.)
 - ~~**Kafka 4.x.** Unclear whether port 2181 is actually served.~~ Not served in 4.3.1.
 - ~~**Splunk.** The `SPLUNK_GENERAL_TERMS` requirement is unconfirmed.~~ Confirmed: 10.4
   exits without it.
