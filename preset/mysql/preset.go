@@ -1,11 +1,7 @@
 // Package mysql provides a Gnomock Preset for MySQL database.
 //
-// This preset uses different docker images for amd64 and arm64 architectures.
-// Even though the versions should be compatible, you should make sure that the
-// tag being used exists in the following repositories:
-//
-// amd64: https://hub.docker.com/_/mysql/
-// arm64: https://hub.docker.com/r/mysql/mysql-server
+// This preset uses the official MySQL image (https://hub.docker.com/_/mysql)
+// on every architecture. Tags older than about 8.0.29 have no arm64 image.
 package mysql
 
 import (
@@ -24,7 +20,7 @@ const (
 	defaultPassword = "gnomick"
 	defaultDatabase = "mydb"
 	defaultPort     = 3306
-	defaultVersion  = "8.0.22"
+	defaultVersion  = "9.7"
 )
 
 func init() {
@@ -36,7 +32,7 @@ func init() {
 // optionally set up initial state.
 //
 // When used without any configuration, it creates a superuser `gnomock` with
-// password `gnomick`, and `mydb` database. Default MySQL version is 8.0.22.
+// password `gnomick`, and `mydb` database. Default MySQL version is 9.7 (LTS).
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
@@ -55,6 +51,11 @@ type P struct {
 	Queries      []string `json:"queries"`
 	QueriesFiles []string `json:"queries_files"`
 	Version      string   `json:"version"`
+}
+
+// Image returns an image that should be pulled to create this container.
+func (p *P) Image() string {
+	return fmt.Sprintf("docker.io/library/mysql:%s", p.Version)
 }
 
 // Ports returns ports that should be used to access this container.

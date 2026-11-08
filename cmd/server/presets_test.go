@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"reflect"
-	"runtime"
 	"testing"
 
 	"github.com/orlangure/gnomock/internal/registry"
@@ -84,13 +83,6 @@ func TestPresets_unknown(t *testing.T) {
 func TestPresets_defaultImage(t *testing.T) {
 	t.Parallel()
 
-	mysqlImage := "docker.io/library/mysql:8.0.22"
-	if runtime.GOARCH == "arm64" {
-		// PLAN.md Phase 6 removes the per-arch split deliberately; update
-		// this test then.
-		mysqlImage = "docker.io/mysql/mysql-server:8.0.22"
-	}
-
 	tests := map[string]string{
 		"azurite":     "mcr.microsoft.com/azure-storage/azurite:3.34.0",
 		"cassandra":   "docker.io/library/cassandra:3",
@@ -104,7 +96,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"memcached":   "docker.io/library/memcached:1.6.9",
 		"mongo":       "docker.io/library/mongo:5.0",
 		"mssql":       "mcr.microsoft.com/mssql/server:2019-latest",
-		"mysql":       mysqlImage,
+		"mysql":       "docker.io/library/mysql:9.7",
 		"postgres":    "docker.io/library/postgres:16.2",
 		"rabbitmq":    "docker.io/library/rabbitmq:3.8.9",
 		"redis":       "docker.io/library/redis:6.0.9",

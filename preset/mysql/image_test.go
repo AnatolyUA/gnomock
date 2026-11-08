@@ -15,14 +15,13 @@ import (
 // expected strings are hardcoded on purpose, so that changing a default image
 // (PLAN.md Phase 6) has to update this test deliberately.
 //
-// The image repository differs per architecture, see archImageRepo in
-// image_amd64_test.go and image_arm64_test.go.
+// The same image is used on every architecture.
 func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = archImageRepo + ":8.0.22"
-		customImage  = archImageRepo + ":8.4.5"
+		defaultImage = "docker.io/library/mysql:9.7"
+		customImage  = "docker.io/library/mysql:8.4.5"
 	)
 
 	tests := []struct {

@@ -3,7 +3,6 @@ package mysql_test
 import (
 	"database/sql"
 	"fmt"
-	"runtime"
 	"testing"
 
 	"github.com/orlangure/gnomock"
@@ -19,20 +18,13 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"8.0.22", "5.7.32"} {
+	for _, version := range []string{"8.4", "9.7", "26.10"} {
 		t.Run(version, testPreset(version))
 	}
 }
 
 func testPreset(version string) func(t *testing.T) {
 	return func(t *testing.T) {
-		if version == "5.7.32" && runtime.GOARCH == "arm64" {
-			// Known gap (PLAN.md): mysql/mysql-server:5.7.32 is published for
-			// amd64 only. Phase 6 drops 5.7 and the per-arch image split; delete
-			// this skip then.
-			t.Skip("mysql/mysql-server:5.7.32 has no arm64 image")
-		}
-
 		queries := `
 			insert into t (a) values (1);
 			insert into t (a) values (2);
