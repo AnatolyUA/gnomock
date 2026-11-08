@@ -356,10 +356,10 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 - [x] **vault** (`d78ac81`). Default and matrix `2.2`. `vault.json` fixed and its two
       allowlist entries removed. No Vault 2.0 change affected the dev server, tokens,
       auth mounts or policies.
-- [ ] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
+- [x] **mssql** (`414d5a6`). Default `2025-latest`; matrix 2017 (CI skip), 2019, 2022,
       2025, all passing locally. Default driver encryption works with 2022/2025. Package
-      doc: amd64 only. **CI-only user/group override fixed locally; CI rerun pending**
-      (see Risks, "mssql 2022/2025 in CI").
+      doc: amd64 only. **CI green after removing the CI-only user/group override**
+      (`fa3d768`, run 42453847781; see Risks, "mssql 2022/2025 in CI").
 - [x] **azurite** (`7dbc018`). Default `3.37.0` (still newest), azblob v1.7.0. New
       `TestPreset_withDefaults`.
 - [x] **splunk** (`d928b09`). Default `10.4`; matrix 10.0, 10.2, 10.4. Splunk 10 exits
@@ -479,7 +479,7 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
   an older kernel. **Decided:** skip in CI (the `kernelGuardedVersions` map in
   `preset/mongo/preset_test.go`); delete the map and the skip once the fixed images
   are published, and consider moving gnomockd `testdata/mongo.json` back to 8.0.
-- **mssql 2022/2025 in CI (fix awaiting CI verification).** The tests forced
+- ~~**mssql 2022/2025 in CI.**~~ **Resolved in `fa3d768`.** The tests forced
   `WithUser("10001:0")` only when `CI` was set. Current 2022/2025 images use `mssql`
   (UID/GID `10001:10001`), and `/var/opt/mssql` is owned by `root:10001` with mode
   `0770`. Forcing GID 0 removes the group access required to initialize the database.
@@ -495,7 +495,8 @@ kernel guard) and `[preset] mssql` (2022/2025, see Risks).
   it. The unchanged workflow now passes local `actionlint`. After the fix,
   `CI=1 go test -race -v ./preset/mssql/... -count=1` passes locally on OrbStack
   (amd64 images under emulation): 2019, 2022, 2025, defaults, and wrong-queries-file;
-  2017 retains its existing CI skip. A GitHub runner rerun is still pending.
+  2017 retains its existing CI skip. Confirmed on the GitHub runner in run
+  42453847781: `[preset] mssql` passes.
 - ~~**Kafka 4.x.** Unclear whether port 2181 is actually served.~~ Not served in 4.3.1.
 - ~~**Splunk.** The `SPLUNK_GENERAL_TERMS` requirement is unconfirmed.~~ Confirmed: 10.4
   exits without it.
