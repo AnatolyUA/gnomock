@@ -3,7 +3,7 @@ package cassandra_test
 import (
 	"testing"
 
-	"github.com/gocql/gocql"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/cassandra"
 	"github.com/stretchr/testify/require"
