@@ -278,6 +278,8 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       module no longer requires or builds any of the old drivers; `go list -m all` in
       workspace mode still shows them, through `cmd/cleaner`'s published gnomock
       v0.32.0 (the existing `cmd/cleaner` risk).
+- [x] **CI (run 42441352310, Phase 5 head):** every job is green, including elastic, k3s
+      and arm64, except the known localstack `0.12.2` case (see Risks).
 
 ## Phase 6: Presets (images, matrices, defaults)
 
