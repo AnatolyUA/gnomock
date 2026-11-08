@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/mongo:5.0"
+		defaultImage = "docker.io/library/mongo:9.0"
 		customImage  = "docker.io/library/mongo:8.0"
 	)
 

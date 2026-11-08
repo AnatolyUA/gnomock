@@ -94,7 +94,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"localstack":  "docker.io/localstack/localstack:4.14",
 		"mariadb":     "docker.io/library/mariadb:12.3",
 		"memcached":   "docker.io/library/memcached:1.6.9",
-		"mongo":       "docker.io/library/mongo:5.0",
+		"mongo":       "docker.io/library/mongo:9.0",
 		"mssql":       "mcr.microsoft.com/mssql/server:2019-latest",
 		"mysql":       "docker.io/library/mysql:9.7",
 		"postgres":    "docker.io/library/postgres:18",

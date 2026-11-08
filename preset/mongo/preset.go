@@ -19,7 +19,7 @@ import (
 	mongooptions "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-const defaultVersion = "5.0"
+const defaultVersion = "9.0"
 
 func init() {
 	registry.Register("mongo", func() gnomock.Preset { return &P{} })
@@ -29,7 +29,8 @@ func init() {
 // specific healthcheck function, default MongoDB image and port, and allows to
 // optionally set up initial state.
 //
-// By default, this preset uses MongoDB 4.4.
+// By default, this preset uses MongoDB 9.0. The Go driver it uses needs
+// MongoDB 4.4 or newer.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

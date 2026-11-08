@@ -3,7 +3,7 @@
         "data_path": "./testdata/mongo",
         "user": "gnomock",
         "password": "foobar",
-        "version": "4"
+        "version": "8.0"
     },
     "options": {}
 }
