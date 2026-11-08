@@ -24,7 +24,7 @@ const ManagementPort = "management"
 const (
 	defaultUser     = "guest"
 	defaultPassword = "guest"
-	defaultVersion  = "3.8.9"
+	defaultVersion  = "4.4"
 	defaultPort     = 5672
 	managementPort  = 15672
 )
@@ -36,6 +36,11 @@ type Message struct {
 	StringBody  string `json:"string_body"`
 	Body        []byte `json:"body"`
 }
+
+// permitTransientQueuesEnv permits transient non-exclusive queues, which
+// RabbitMQ deprecated in 4.0 and stopped permitting by default in 4.3.
+const permitTransientQueuesEnv = "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=" +
+	"-rabbit permit_deprecated_features #{transient_nonexcl_queues=>true}"
 
 func init() {
 	registry.Register("rabbitmq", func() gnomock.Preset { return &P{} })
@@ -50,7 +55,14 @@ func init() {
 // https://hub.docker.com/_/rabbitmq/?tab=tags for a list of available tags.
 //
 // When used without specifying username/password, default ones are used:
-// guest/guest. Default version for this preset is 3.8.9.
+// guest/guest. Default version for this preset is 4.4.
+//
+// RabbitMQ 4.3 and newer refuse transient (non-durable) non-exclusive queues
+// by default. This preset re-enables them (the deprecated
+// transient_nonexcl_queues feature), so that the queues it creates for
+// WithMessages, and the transient queues declared by tests, keep working. A
+// RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS environment variable passed with
+// gnomock.WithEnv replaces this setting.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
@@ -92,6 +104,7 @@ func (p *P) Options() []gnomock.Option {
 
 	opts := []gnomock.Option{
 		gnomock.WithHealthCheck(p.healthcheck),
+		gnomock.WithEnv(permitTransientQueuesEnv),
 	}
 
 	if p.User != "" && p.Password != "" {

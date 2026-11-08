@@ -1,6 +1,6 @@
 {
     "preset": {
-        "version": "3.8.5-alpine",
+        "version": "4.3-alpine",
         "messages": [
             {
                 "queue": "events",

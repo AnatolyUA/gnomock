@@ -22,8 +22,8 @@ func TestMain(m *testing.M) {
 
 func TestPreset(t *testing.T) {
 	versions := []string{
-		"3.8.9-alpine",
-		"3.13-alpine",
+		"4.3-alpine",
+		"4.4-alpine",
 	}
 
 	for _, version := range versions {
@@ -163,7 +163,7 @@ func TestPreset_withManagement(t *testing.T) {
 	// gnomock setup
 	p := rabbitmq.Preset(
 		rabbitmq.WithUser("gnomock", "strong-password"),
-		rabbitmq.WithVersion("3.8.9-management-alpine"),
+		rabbitmq.WithVersion("4.4-management-alpine"),
 	)
 
 	container, err := gnomock.Start(p)

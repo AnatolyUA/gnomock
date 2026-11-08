@@ -18,8 +18,8 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/rabbitmq:3.8.9"
-		customImage  = "docker.io/library/rabbitmq:3.8.9-alpine"
+		defaultImage = "docker.io/library/rabbitmq:4.4"
+		customImage  = "docker.io/library/rabbitmq:4.4-alpine"
 	)
 
 	tests := []struct {
@@ -36,7 +36,7 @@ func TestPreset_Image(t *testing.T) {
 		{
 			name: "WithVersion",
 			preset: func(*testing.T) gnomock.Preset {
-				return rabbitmq.Preset(rabbitmq.WithVersion("3.8.9-alpine"))
+				return rabbitmq.Preset(rabbitmq.WithVersion("4.4-alpine"))
 			},
 			want: customImage,
 		},
@@ -47,16 +47,16 @@ func TestPreset_Image(t *testing.T) {
 		},
 		{
 			name:   "json version",
-			preset: decodeRabbitmqPreset(`{"version":"3.8.9-alpine"}`),
+			preset: decodeRabbitmqPreset(`{"version":"4.4-alpine"}`),
 			want:   customImage,
 		},
 		{
 			// Management variants are selected by tag only.
 			name: "WithVersion management",
 			preset: func(*testing.T) gnomock.Preset {
-				return rabbitmq.Preset(rabbitmq.WithVersion("3.8.9-management-alpine"))
+				return rabbitmq.Preset(rabbitmq.WithVersion("4.4-management-alpine"))
 			},
-			want: "docker.io/library/rabbitmq:3.8.9-management-alpine",
+			want: "docker.io/library/rabbitmq:4.4-management-alpine",
 		},
 	}
 
@@ -98,9 +98,9 @@ func TestPreset_ImageManagementPorts(t *testing.T) {
 		wantManagement bool
 	}{
 		{version: "", wantManagement: false},
-		{version: "3.8.9-alpine", wantManagement: false},
-		{version: "3.8.9-management", wantManagement: true},
-		{version: "3.8.9-management-alpine", wantManagement: true},
+		{version: "4.4-alpine", wantManagement: false},
+		{version: "4.4-management", wantManagement: true},
+		{version: "4.4-management-alpine", wantManagement: true},
 	}
 
 	for _, tt := range tests {

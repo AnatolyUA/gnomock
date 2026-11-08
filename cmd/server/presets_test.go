@@ -98,7 +98,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"mssql":       "mcr.microsoft.com/mssql/server:2019-latest",
 		"mysql":       "docker.io/library/mysql:9.7",
 		"postgres":    "docker.io/library/postgres:18",
-		"rabbitmq":    "docker.io/library/rabbitmq:3.8.9",
+		"rabbitmq":    "docker.io/library/rabbitmq:4.4",
 		"redis":       "docker.io/library/redis:8.10",
 		"splunk":      "docker.io/splunk/splunk:latest",
 		"vault":       "hashicorp/vault:1.13.0",
