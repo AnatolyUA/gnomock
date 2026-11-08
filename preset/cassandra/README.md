@@ -9,7 +9,7 @@ package cassandra_test
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"4.0", "3"} {
+	for _, version := range []string{"4.0", "4.1", "5.0"} {
 		t.Run(version, testPreset(version))
 	}
 }

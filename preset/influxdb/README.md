@@ -26,7 +26,7 @@ func TestInfluxDB(t *testing.T) {
 	token := "gnomock-influxdb-token"
 
 	p := influxdb.Preset(
-		influxdb.WithVersion("alpine"),
+		influxdb.WithVersion("2.9-alpine"),
 		influxdb.WithAuthToken(token),
 		influxdb.WithBucket(bucket),
 		influxdb.WithOrg(org),

@@ -34,7 +34,7 @@ func ExamplePreset() {
 	}
 
 	p := splunk.Preset(
-		splunk.WithVersion("latest"),
+		splunk.WithVersion("10.4"),
 		splunk.WithLicense(true),
 		splunk.WithPassword("12345678"),
 		splunk.WithValues(events),

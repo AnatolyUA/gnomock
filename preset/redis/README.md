@@ -7,16 +7,16 @@ running tests against a real Redis container, without mocks.
 package redis_test
 
 import (
+	"context"
 	"fmt"
-	"testing"
 
-	redisclient "github.com/go-redis/redis/v7"
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/redis"
+	redisclient "github.com/redis/go-redis/v9"
 )
 
 func ExamplePreset() {
-	vs := make(map[string]interface{})
+	vs := make(map[string]any)
 
 	vs["a"] = "foo"
 	vs["b"] = 42
@@ -27,19 +27,22 @@ func ExamplePreset() {
 
 	defer func() { _ = gnomock.Stop(container) }()
 
+	ctx := context.Background()
 	addr := container.DefaultAddress()
 	client := redisclient.NewClient(&redisclient.Options{Addr: addr})
 
-	fmt.Println(client.Get("a").Result())
+	defer func() { _ = client.Close() }()
+
+	fmt.Println(client.Get(ctx, "a").Result())
 
 	var number int
 
-	err := client.Get("b").Scan(&number)
+	err := client.Get(ctx, "b").Scan(&number)
 	fmt.Println(number, err)
 
 	var flag bool
 
-	err = client.Get("c").Scan(&flag)
+	err = client.Get(ctx, "c").Scan(&flag)
 	fmt.Println(flag, err)
 
 	// Output:

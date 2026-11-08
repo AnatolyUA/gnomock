@@ -12,9 +12,9 @@ import (
 
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	mongodb "go.mongodb.org/mongo-driver/mongo"
-	mongooptions "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	mongodb "go.mongodb.org/mongo-driver/v2/mongo"
+	mongooptions "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func ExamplePreset() {
@@ -34,17 +34,14 @@ func ExamplePreset() {
 	uri := fmt.Sprintf("mongodb://%s:%s@%s", "gnomock", "gnomick", addr)
 	clientOptions := mongooptions.Client().ApplyURI(uri)
 
-	client, err := mongodb.NewClient(clientOptions)
+	client, err := mongodb.Connect(clientOptions)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
 
-	err = client.Connect(ctx)
-	if err != nil {
-		panic(err)
-	}
+	defer func() { _ = client.Disconnect(ctx) }()
 
 	// see testdata folder to verify names/numbers
 	fmt.Println(client.Database("db1").Collection("users").CountDocuments(ctx, bson.D{}))

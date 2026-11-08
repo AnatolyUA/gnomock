@@ -51,7 +51,7 @@ path "secret/metadata/*" {
 	}()
 
 	p := vault.Preset(
-		vault.WithVersion("latest"),
+		vault.WithVersion("2.2"),
 		vault.WithAuthToken("root-token"),
 		vault.WithAuth([]vault.Auth{
 			{
