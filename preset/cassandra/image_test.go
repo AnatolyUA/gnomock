@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "docker.io/library/cassandra:3"
+		defaultImage = "docker.io/library/cassandra:5.0"
 		customImage  = "docker.io/library/cassandra:4.1"
 	)
 

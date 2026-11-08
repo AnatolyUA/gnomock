@@ -20,7 +20,7 @@ const (
 	DefaultUser     = "cassandra"
 	DefaultPassword = "cassandra"
 
-	defaultVersion = "3"
+	defaultVersion = "5.0"
 	defaultPort    = 9042
 )
 
@@ -33,7 +33,7 @@ func init() {
 // port.
 //
 // Containers created using this preset should be accessed using
-// cassandra/cassandra username/password pair.
+// cassandra/cassandra username/password pair. Default Cassandra version is 5.0.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
