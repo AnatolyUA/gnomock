@@ -56,23 +56,7 @@ func (p *P) Options() []gnomock.Option {
 	}
 
 	if p.Values != nil {
-		initf := func(ctx context.Context, c *gnomock.Container) error {
-			addr := c.Address(gnomock.DefaultPort)
-			client := redisclient.NewClient(&redisclient.Options{Addr: addr})
-
-			defer func() { _ = client.Close() }()
-
-			for k, v := range p.Values {
-				err := client.Set(ctx, k, v, 0).Err()
-				if err != nil {
-					return fmt.Errorf("can't set '%s'='%v': %w", k, v, err)
-				}
-			}
-
-			return nil
-		}
-
-		opts = append(opts, gnomock.WithInit(initf))
+		opts = append(opts, gnomock.WithInit(p.initf))
 	}
 
 	return opts
@@ -84,13 +68,46 @@ func (p *P) setDefaults() {
 	}
 }
 
+func (p *P) initf(ctx context.Context, c *gnomock.Container) error {
+	addr := c.Address(gnomock.DefaultPort)
+	client := newClient(ctx, addr)
+
+	defer func() { _ = client.Close() }()
+
+	for k, v := range p.Values {
+		err := client.Set(ctx, k, v, 0).Err()
+		if err != nil {
+			return fmt.Errorf("can't set '%s'='%v': %w", k, v, err)
+		}
+	}
+
+	return nil
+}
+
 func healthcheck(ctx context.Context, c *gnomock.Container) error {
 	addr := c.Address(gnomock.DefaultPort)
-	client := redisclient.NewClient(&redisclient.Options{Addr: addr})
+	client := newClient(ctx, addr)
 
 	defer func() { _ = client.Close() }()
 
 	_, err := client.Ping(ctx).Result()
 
 	return err
+}
+
+// newClient returns a client whose commands honor the deadline and
+// cancellation of ctx. Without ContextTimeoutEnabled, go-redis uses
+// context.Background() for socket reads and writes, so a command could
+// outlive gnomock's start timeout. That option only turns a deadline into
+// socket deadlines, so the client is also closed when ctx is canceled, which
+// unblocks a command waiting for a reply. Closing it again later is harmless.
+func newClient(ctx context.Context, addr string) *redisclient.Client {
+	client := redisclient.NewClient(&redisclient.Options{
+		Addr:                  addr,
+		ContextTimeoutEnabled: true,
+	})
+
+	context.AfterFunc(ctx, func() { _ = client.Close() })
+
+	return client
 }
