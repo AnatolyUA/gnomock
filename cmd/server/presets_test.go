@@ -114,13 +114,13 @@ func TestPresets_defaultImage(t *testing.T) {
 
 	require.Len(t, tests, len(registeredPresets()))
 
-	// The subtests run sequentially on purpose. Current behavior: the mysql
-	// and mariadb presets each guard mysqldriver.SetLogger with their own
-	// sync.Once, so calling Options() on both concurrently is a data race on
-	// the driver's global logger (seen with -race). The race is pre-existing
-	// in non-test code and out of scope for these safety-net tests.
+	// The subtests run in parallel on purpose: under -race they catch shared
+	// global state in Options(), like the MySQL driver logger that the mysql
+	// and mariadb presets used to set behind separate sync.Once guards.
 	for name, want := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			p := registry.Find(name)
 			require.NotNil(t, p)
 			require.NoError(t, json.Unmarshal([]byte(`{}`), p))

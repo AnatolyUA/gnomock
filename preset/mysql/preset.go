@@ -12,13 +12,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
-	"log"
 	"os"
-	"sync"
 
-	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/orlangure/gnomock"
+	"github.com/orlangure/gnomock/internal/mysqllog"
 	"github.com/orlangure/gnomock/internal/registry"
 )
 
@@ -29,8 +26,6 @@ const (
 	defaultPort     = 3306
 	defaultVersion  = "8.0.22"
 )
-
-var setLoggerOnce sync.Once
 
 func init() {
 	registry.Register("mysql", func() gnomock.Preset { return &P{} })
@@ -69,10 +64,7 @@ func (p *P) Ports() gnomock.NamedPorts {
 
 // Options returns a list of options to configure this container.
 func (p *P) Options() []gnomock.Option {
-	setLoggerOnce.Do(func() {
-		// err is always nil for non-nil logger
-		_ = mysqldriver.SetLogger(log.New(io.Discard, "", -1))
-	})
+	mysqllog.Discard()
 
 	p.setDefaults()
 

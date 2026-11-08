@@ -28,6 +28,7 @@ tasks:
           ./internal/registry \
           ./internal/cleaner \
           ./internal/health \
+          ./internal/mysqllog \
           ./cmd/server
 
   swagger:update-version:
