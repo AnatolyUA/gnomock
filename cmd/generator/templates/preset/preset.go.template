@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"github.com/orlangure/gnomock"
-	{{ if .Public -}}
+	{{- if .Public }}
 	"github.com/orlangure/gnomock/internal/registry"
-	{{- end}}
+	{{- end }}
 )
 
 // TODO: use a pinned-down version.

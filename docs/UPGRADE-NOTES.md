@@ -15,15 +15,18 @@ below are the ones that can change behavior or break a build.
    newer. EOL server versions are no longer tested for any preset.
 4. **Init and healthcheck honor the start timeout.** The SQL presets (postgres,
    mysql, mariadb, mssql, cockroachdb) run their healthcheck and init queries
-   with the context gnomock passes in. An init that runs past `WithTimeout`
-   (for example a large `WithQueriesFile` migration) now fails with a context
-   error instead of finishing late.
+   with the context gnomock passes in, and so do redis (the healthcheck ping
+   and the `WithValues` writes) and mongo (the `WithData` inserts). An init
+   that runs past `WithTimeout` (for example a large `WithQueriesFile`
+   migration or a big `WithData` set) now fails with a context error instead
+   of finishing late.
 5. **`WithOptions` and gnomockd honor every documented field.** `privileged`,
    `cmd`, `entrypoint`, `disable_cleanup`, `use_local_images_first`, `auth`,
    `host_mounts`, `extraHosts`, `reuse`, `customImage` and `user` used to be
    silently ignored. They are now applied, also for Go callers that pass a
-   populated `Options` to `WithOptions`. Unset fields don't override options
-   applied earlier. See the security section in `docs/server.md`: an exposed
+   populated `Options` to `WithOptions`. Unset new fields don't override
+   options applied earlier. `Debug` and `ContainerName` keep their old
+   behavior: `WithOptions` always replaces them, even when unset. See the security section in `docs/server.md`: an exposed
    gnomockd can now start privileged containers with host mounts.
 6. **Pull failures fail at pull time.** An unknown tag or a denied pull now
    fails with `can't pull image: ...` and the daemon's message, instead of a

@@ -1023,7 +1023,7 @@ components:
           type: string
           description: Splunk version.
           default: '10.4'
-          example: 8.0.2.1
+          example: '10.4'
       required:
         - accept_license
         - admin_password

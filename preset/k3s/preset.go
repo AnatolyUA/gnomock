@@ -151,7 +151,7 @@ func init() {
 // k3s specific healthcheck function and default k3s image and port. Please
 // note that this preset launches a privileged docker container.
 //
-// By default, this preset sets up k3s v1.19.3.
+// By default, this preset sets up k3s v1.37.2-k3s1 (defaultVersion).
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 
