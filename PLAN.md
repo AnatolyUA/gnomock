@@ -252,13 +252,32 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 
 ## Phase 5: Major driver upgrades (internal only, no public API change)
 
-- [ ] **Redis.** `go-redis/redis/v7` → `github.com/redis/go-redis/v9`, in the preset and
-      its tests. The gnomockd test moves from `go-redis/redis` v6 to v9.
-- [ ] **Mongo.** `go.mongodb.org/mongo-driver` v1 → `go.mongodb.org/mongo-driver/v2`.
-      The `bsonrw` package is gone in v2, so rework the data-loading code. v2 needs
-      server 4.2 or newer, which is fine under the new matrix.
-- [ ] **Cassandra.** `github.com/gocql/gocql` → `github.com/apache/cassandra-gocql-driver/v2`.
-- [ ] **Elastic.** Remove the `go-elasticsearch/v7` dependency and the v7 tests.
+- [x] **Redis.** `go-redis/redis/v7` → `github.com/redis/go-redis/v9` (v9.23.0), in the
+      preset and its tests. The gnomockd test moves from `go-redis/redis` v6 to v9.
+      The healthcheck and `WithValues` init now pass gnomock's context. Value encoding
+      is unchanged (bools as `1`/`0`, JSON numbers in plain decimal). Passed against
+      5.0.10, 6.0.9 and 7.2.4 with goleak.
+- [x] **Mongo.** `go.mongodb.org/mongo-driver` v1 → `go.mongodb.org/mongo-driver/v2`
+      (v2.10.0). The `bsonrw` package is gone in v2, so rework the data-loading code.
+      ~~v2 needs server 4.2 or newer~~ **Correction:** v2.10 needs server **4.4** or
+      newer (`MinSupportedMongoDBVersion`). That is still fine under the new matrix.
+  - Data loader: `bson.NewExtJSONValueReader` + `bson.NewDecoder` (no error return),
+    `mongo.Connect` without a context. Two small fixes along the way: data files are
+    now closed (they were left open), and inserts use the init context instead of
+    `context.Background()`.
+  - The `3.6.21` test case is dropped now, because v2 can't talk to it. Phase 6 still
+    sets the final matrix. New fixture `testdata/db2/events.json` checks that extended
+    JSON types (`$oid`, `$date` in both forms, `$numberLong`) load as BSON types.
+- [x] **Cassandra.** `github.com/gocql/gocql` → `github.com/apache/cassandra-gocql-driver/v2`
+      (v2.1.2). Import path change only. Passed against 3 and 4.0 with goleak.
+- [x] **Elastic.** Remove the `go-elasticsearch/v7` dependency and the v7 tests
+      (`preset_v7_test.go`). The README row still lists 7.17.21; Phase 7 updates it.
+- [x] **Phase gate (local, amd64):** build, `go vet` (amd64 and arm64), golangci-lint
+      (0 issues), `GOWORK=off go build`, and the redis, mongo and cassandra presets plus
+      their gnomockd tests. Elastic only compiles locally (see the disk risk). The root
+      module no longer requires or builds any of the old drivers; `go list -m all` in
+      workspace mode still shows them, through `cmd/cleaner`'s published gnomock
+      v0.32.0 (the existing `cmd/cleaner` risk).
 
 ## Phase 6: Presets (images, matrices, defaults)
 
@@ -334,7 +353,7 @@ For every row:
    fields that used to be silently ignored. Go callers that pass a populated `Options`
    to `WithOptions` get those fields applied too. Unset fields don't override options
    applied earlier.
-7. **Old servers.** The Mongo driver needs server 4.2 or newer, and EOL server versions are
+7. **Old servers.** The Mongo driver needs server 4.4 or newer, and EOL server versions are
    no longer tested.
 8. **Init and healthcheck honor the start timeout.** The SQL presets (postgres, mysql,
    mariadb, mssql, cockroachdb) now run their healthcheck and init queries with the
