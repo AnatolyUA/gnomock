@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultVersion   = "1.13.0"
+	defaultVersion   = "2.2"
 	defaultPort      = 8200
 	defaultAuthToken = "gnomock-vault-token" //nolint:gosec
 )
@@ -24,6 +24,7 @@ func init() {
 
 // Preset creates a new Gmomock Vault preset. This preset includes a
 // vault specific healthcheck function and default vault image and port.
+// Default vault version is 2.2.
 func Preset(opts ...Option) gnomock.Preset {
 	p := &P{}
 

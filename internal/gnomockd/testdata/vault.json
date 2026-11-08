@@ -1,6 +1,6 @@
 {
   "preset": {
-    "version": "latest",
+    "version": "2.1",
     "auth_token": "gnomock-vault-token",
     "auth": [
       {
@@ -13,9 +13,7 @@
         "name": "empty_policy",
         "data": "{}"
       }
-    ],
-    "options": {
-
-    }
-  }
+    ]
+  },
+  "options": {}
 }

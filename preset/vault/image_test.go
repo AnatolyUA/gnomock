@@ -18,7 +18,7 @@ func TestPreset_Image(t *testing.T) {
 	t.Parallel()
 
 	const (
-		defaultImage = "hashicorp/vault:1.13.0"
+		defaultImage = "hashicorp/vault:2.2"
 		customImage  = "hashicorp/vault:1.15.6"
 	)
 

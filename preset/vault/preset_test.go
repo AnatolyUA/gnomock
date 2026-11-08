@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func TestPreset(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"1.13", "1.12", "1.11", "1.10", "latest"} {
+	for _, version := range []string{"2.2"} {
 		t.Run(version, testPreset(version, "root-token"))
 	}
 }

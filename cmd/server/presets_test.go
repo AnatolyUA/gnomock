@@ -101,7 +101,7 @@ func TestPresets_defaultImage(t *testing.T) {
 		"rabbitmq":    "docker.io/library/rabbitmq:4.4",
 		"redis":       "docker.io/library/redis:8.10",
 		"splunk":      "docker.io/splunk/splunk:latest",
-		"vault":       "hashicorp/vault:1.13.0",
+		"vault":       "hashicorp/vault:2.2",
 	}
 
 	require.Len(t, tests, len(registeredPresets()))

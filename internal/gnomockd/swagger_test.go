@@ -240,12 +240,7 @@ func TestSwaggerStartPathsMatchRegistry(t *testing.T) {
 func TestSwaggerTestdataRequestKeys(t *testing.T) {
 	t.Parallel()
 
-	// Known gap: vault.json nests "options" inside "preset" instead of
-	// putting it at the top level. Encoding/json silently ignores the unknown
-	// key today. Remove this entry once the testdata file is fixed.
 	knownGaps := []string{
-		`vault.json: preset key "options" is not a swagger vault property`,
-		`vault.json: preset key "options" is not a go field of the vault preset`,
 		// Known gap: the cockroachdb swagger schema documents only "version"
 		// (see TestSwaggerPresetJSONTags). Fix swagger.yaml in PLAN.md Phase 7.
 		`cockroachdb.json: preset key "db" is not a swagger cockroachdb property`,
