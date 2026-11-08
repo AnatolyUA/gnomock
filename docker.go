@@ -108,16 +108,11 @@ func (d *docker) pullImage(ctx context.Context, image string, cfg *Options) erro
 		return fmt.Errorf("can't pull image: %w", err)
 	}
 
-	defer func() {
-		closeErr := resp.Close()
-
-		if err == nil {
-			err = closeErr
-		}
-	}()
-
-	_, err = io.ReadAll(resp)
-	if err != nil {
+	// The daemon reports most pull failures (unknown tag, denied access,
+	// interrupted download) inside the JSON message stream of a successful
+	// HTTP response. Wait decodes the stream, returns the first reported
+	// error, and closes the response.
+	if err := resp.Wait(ctx); err != nil {
 		return fmt.Errorf("can't read server output: %w", err)
 	}
 
