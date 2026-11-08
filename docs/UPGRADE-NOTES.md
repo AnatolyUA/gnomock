@@ -64,6 +64,12 @@ below are the ones that can change behavior or break a build.
   - Unclean paths (`//stop`) redirect with 307 (keeps the POST) instead of 301.
   - A percent-encoded `/` or `.` in the preset name (`/start/a%2Fb`) now gets the
     JSON "preset not found" 404.
+- **Debug log redaction.** With `WithDebugMode` (JSON `debug`), the logged
+  config no longer shows the registry `auth` string or the values of
+  secret-looking environment variables (names containing `PASS`, `TOKEN`,
+  `SECRET`, `KEY`, `AUTH`, `CREDENTIAL` or `ACCOUNTS`, such as
+  `POSTGRES_PASSWORD` or `LOCALSTACK_AUTH_TOKEN`). The variable names are
+  still logged, and the container still gets the real values.
 - **InfluxDB** supports 2.x only. The floating `latest`/`alpine` tags may point
   to v3, which isn't supported, so pin a 2.x tag.
 - **Architectures.** linux/amd64 and linux/arm64 are tested. mssql and splunk

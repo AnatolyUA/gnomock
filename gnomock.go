@@ -97,7 +97,7 @@ func StartCustom(image string, ports NamedPorts, opts ...Option) (*Container, er
 	}
 
 	g.log.Infow("starting", "image", image, "ports", ports)
-	g.log.Infow("using config", "image", image, "ports", ports, "config", config)
+	g.log.Infow("using config", "image", image, "ports", ports, "config", config.loggable())
 
 	c, err := newContainer(g, image, ports, config)
 	if err != nil {
