@@ -304,6 +304,19 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
 | azurite | 3.34.0 (`DefaultVersion`) → **3.37.0** | 3.37.0 | Already pinned; bump only. Bump `azblob` v1.6.1 → v1.7.0 in the same step (Phase 3 hold). |
 | splunk | latest → **10.4** | 10.0, 10.2, 10.4 | amd64 only, document it. Add the `SPLUNK_GENERAL_TERMS` acceptance env (believed required since 9.4/10). |
 
+### Progress
+
+- [x] **localstack** (`6240b32`). Default `4.14`; matrix 3.8, 4.14, 2026.10 (needs
+      `LOCALSTACK_AUTH_TOKEN`, skipped otherwise). Newest tags on 2026-11-08: 4.14.0
+      and 2026.10.6, unchanged. `WithAuthToken` / JSON `auth_token` (documented in
+      swagger in this commit, because the swagger tag test requires it). The healthcheck
+      always uses `/_localstack/health`; the 0.x/1.x path selection and the unused
+      `web` port (8080) are removed. Passed locally: preset (2026.10 skipped) and gnomockd.
+- [x] **mysql** (`7d90546`). Default `9.7`; matrix 8.4, 9.7, 26.10 (newest: 8.4.13,
+      9.7.4, 26.10.0). Per-arch split and both arm64 skips removed; gnomockd testdata asks
+      for 8.4. `caching_sha2_password` over plain TCP works. Passed locally: preset and
+      gnomockd.
+
 For every row:
 
 - [ ] Update the `defaultVersion` constant and the doc comments.
@@ -369,7 +382,9 @@ For every row:
    `/start/%2e%2e`) now reaches the handler and gets the JSON "preset not found" 404,
    where mux gave a plain-text 404 or a redirect. 405 responses now carry
    `Content-Type: text/plain`.
-10. **Pull failures fail at pull time.** An unknown tag or a denied pull now fails with
+10. **LocalStack ports.** The container no longer exposes the `web` port (8080), which
+    only LocalStack before 0.11.3 served. Images before 1.3.0 are not supported.
+11. **Pull failures fail at pull time.** An unknown tag or a denied pull now fails with
     `can't pull image: ...` and the daemon's message, instead of a later
     `can't create container: ... No such image`.
 
