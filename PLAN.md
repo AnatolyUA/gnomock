@@ -360,6 +360,10 @@ A trial run of this phase already compiled and passed `go vet` with no code chan
       doc: amd64 only.
 - [x] **azurite** (`7dbc018`). Default `3.37.0` (still newest), azblob v1.7.0. New
       `TestPreset_withDefaults`.
+- [x] **splunk** (`d928b09`). Default `10.4`; matrix 10.0, 10.2, 10.4. Splunk 10 exits
+      without `SPLUNK_GENERAL_TERMS`, so `WithLicense(true)` now sets it too. New
+      `TestPreset_withDefaults` (license and password are still required: neither has a
+      default). Package doc: amd64 only. All passed locally, one version at a time.
 
 For every row:
 
