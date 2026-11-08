@@ -107,6 +107,16 @@ below are the ones that can change behavior or break a build.
   kernels (which the CI runners use) until mongo 8.0.37 / 8.3.16 are published.
   They pass on older kernels. The removal steps are in the
   `TODO(mongo-kernel-guard)` comment in `preset/mongo/preset_test.go`.
+- **mssql 2017 and Go's x509 check.** SQL Server 2017 creates a self-signed
+  certificate with a random serial number, and it is often negative. Go 1.23+
+  rejects negative serials (`x509: negative serial number`) unless the main
+  module's `go` line is below 1.23 or `GODEBUG=x509negativeserial=1` is set.
+  The healthcheck then never connects, and `Start` fails at the timeout.
+  Callers whose own module says `go 1.23` or newer already had this, and the
+  Go 1.26 floor now applies it to everyone. 2017 is skipped in CI, so CI
+  doesn't catch it. Workaround: run with `GODEBUG=x509negativeserial=1`, or add
+  `//go:debug x509negativeserial=1` to the main package or test file. 2019 and
+  newer are not affected.
 - **azblob is held at v1.7.0.** v1.8.x sends a storage API version that no
   released Azurite (newest 3.37.0) accepts.
 - **CodeQL** is disabled on the fork by GitHub (`disabled_fork`) and did not run
