@@ -334,16 +334,20 @@ func TestGnomock_witUseLocalImagesFirst(t *testing.T) {
 func TestGnomock_withExtraHosts(t *testing.T) {
 	t.Parallel()
 
+	// The host name is under the reserved .invalid TLD (RFC 6761), so it
+	// resolves only through the extra hosts entry. A bare name like "test"
+	// can resolve through the CI runner's DNS search domains.
 	const (
 		busyboxImage = "docker.io/library/busybox:1.35.0"
 		retries      = "5"
+		host         = "gnomock-test.invalid"
 	)
 
 	container, err := gnomock.StartCustom(
 		busyboxImage,
 		gnomock.DefaultTCP(testutil.GoodPort80),
-		gnomock.WithExtraHosts([]string{"test:127.0.0.1"}),
-		gnomock.WithCommand("ping", "-c", retries, "test"),
+		gnomock.WithExtraHosts([]string{host + ":127.0.0.1"}),
+		gnomock.WithCommand("ping", "-c", retries, host),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, container)
@@ -352,7 +356,7 @@ func TestGnomock_withExtraHosts(t *testing.T) {
 	container, err = gnomock.StartCustom(
 		busyboxImage,
 		gnomock.DefaultTCP(testutil.GoodPort80),
-		gnomock.WithCommand("ping", "-c", retries, "test"),
+		gnomock.WithCommand("ping", "-c", retries, host),
 	)
 	require.Error(t, err)
 	require.Nil(t, container)
@@ -361,7 +365,7 @@ func TestGnomock_withExtraHosts(t *testing.T) {
 	container, err = gnomock.StartCustom(
 		busyboxImage,
 		gnomock.DefaultTCP(testutil.GoodPort80),
-		gnomock.WithExtraHosts([]string{"test:127.0.0.1"}),
+		gnomock.WithExtraHosts([]string{host + ":127.0.0.1"}),
 		gnomock.WithCommand("ping", "-c", retries, "google.com"),
 	)
 	require.NoError(t, err)
